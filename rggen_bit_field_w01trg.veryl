@@ -1,0 +1,38 @@
+import rggen_rtl_pkg::*;
+
+pub module rggen_bit_field_w01trg #(
+  param TRIGGER_VALUE:  bit = '0,
+  param WIDTH:          u32 = 1
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  bit_field_if: modport rggen_bit_field_if::bit_field,
+  i_value:      input   logic<WIDTH>,
+  o_trigger:    output  logic<WIDTH>
+){
+  var trigger:  logic<WIDTH>;
+
+  always_comb {
+    bit_field_if.read_data  = i_value;
+    bit_field_if.value      = trigger;
+  }
+
+  always_comb {
+    o_trigger = trigger;
+  }
+
+  always_ff {
+    if_reset {
+      trigger = '0;
+    } else if bit_field_if.valid {
+      trigger =
+        if TRIGGER_VALUE {
+          bit_field_if.write_mask & bit_field_if.write_data
+        } else {
+          bit_field_if.write_mask & (~bit_field_if.write_data)
+        };
+    } else if trigger != '0 {
+      trigger = '0;
+    }
+  }
+}

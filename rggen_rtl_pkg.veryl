@@ -1,0 +1,44 @@
+pub package rggen_rtl_pkg {
+  enum rggen_access {
+    READ          = 2'b10,
+    POSTED_WRITE  = 2'b01,
+    WRITE         = 2'b11
+  }
+
+  const RGGEN_ACCESS_DATA_BIT:        u32 = 0;
+  const RGGEN_ACCESS_NON_POSTED_BIT:  u32 = 1;
+
+  enum rggen_status {
+    OKAY          = 2'b00,
+    EXOKAY        = 2'b01,
+    SLAVE_ERROR   = 2'b10,
+    DECODE_ERROR  = 2'b11
+  }
+
+  enum rggen_sw_hw_access {
+    SW_ACCESS,
+    HW_ACCESS
+  }
+
+  enum rggen_polarity {
+    ACTIVE_LOW,
+    ACTIVE_HIGH
+  }
+
+  enum rggen_sw_action {
+    READ_NONE,
+    READ_DEFAULT,
+    READ_CLEAR,
+    READ_SET,
+    WRITE_NONE,
+    WRITE_DEFAULT,
+    WRITE_0_CLEAR,
+    WRITE_1_CLEAR,
+    WRITE_CLEAR,
+    WRITE_0_SET,
+    WRITE_1_SET,
+    WRITE_SET,
+    WRITE_0_TOGGLE,
+    WRITE_1_TOGGLE
+  }
+}
