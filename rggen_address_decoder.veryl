@@ -1,0 +1,41 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_address_decoder #(
+  param READABLE:       bit                 = 1,
+  param WRITABLE:       bit                 = 1,
+  param ADDRESS_WIDTH:  u32                 = 8,
+  param BUS_WIDTH:      u32                 = 32,
+  param START_ADDRESS:  bit<ADDRESS_WIDTH>  = '0,
+  param BYTE_SIZE:      u32                 = BUS_WIDTH / 8
+)(
+  i_address:          input   logic<ADDRESS_WIDTH>,
+  i_access:           input   rggen_access,
+  i_additional_match: input   logic,
+  o_match:            output  logic
+) {
+  const LSB:          u32                 = $clog2(BUS_WIDTH / 8);
+  const MSB:          u32                 = ADDRESS_WIDTH - LSB;
+  const END_ADDRESS:  bit<ADDRESS_WIDTH>  = START_ADDRESS
+                                          + (BYTE_SIZE - 1) as ADDRESS_WIDTH;
+
+  var address_match:  logic;
+  var access_match:   logic;
+
+  /* verilator lint_off CMPCONST */
+  always_comb {
+    address_match =
+      inside i_address[MSB:LSB] {
+        START_ADDRESS[MSB:LSB]..=END_ADDRESS[MSB:LSB]
+      };
+
+    case i_access {
+      rggen_access::READ:         access_match  = READABLE;
+      rggen_access::POSTED_WRITE: access_match  = WRITABLE;
+      rggen_access::WRITE:        access_match  = WRITABLE;
+      default:                    access_match  = '0;
+    }
+
+    o_match = address_match && access_match && i_additional_match;
+  }
+  /* verilator lint_on CMPCONST */
+}

@@ -1,0 +1,56 @@
+import rggen_rtl_pkg::*;
+
+interface rggen_register_if #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param BUS_WIDTH:      u32 = 32,
+  param VALUE_WIDTH:    u32 = BUS_WIDTH
+){
+  var valid:      logic;
+  var access:     rggen_access;
+  var address:    logic<ADDRESS_WIDTH>;
+  var write_data: logic<BUS_WIDTH>;
+  var strobe:     logic<BUS_WIDTH>;
+  var ready:      logic;
+  var status:     rggen_status;
+  var read_data:  logic<BUS_WIDTH>;
+  var active:     logic;
+  var value:      logic<VALUE_WIDTH>;
+
+  modport host {
+    valid:      output,
+    access:     output,
+    address:    output,
+    write_data: output,
+    strobe:     output,
+    ready:      input,
+    status:     input,
+    read_data:  input,
+    active:     input
+  }
+
+  modport register {
+    valid:      input,
+    access:     input,
+    address:    input,
+    write_data: input,
+    strobe:     input,
+    ready:      output,
+    status:     output,
+    read_data:  output,
+    active:     output,
+    value:      output
+  }
+
+  modport monitor {
+    valid:      input,
+    access:     input,
+    address:    input,
+    write_data: input,
+    strobe:     input,
+    ready:      input,
+    status:     input,
+    read_data:  input,
+    active:     input,
+    value:      input
+  }
+}

@@ -1,0 +1,168 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_register_common #(
+  param READABLE:       bit                 = 1,
+  param WRITABLE:       bit                 = 1,
+  param ADDRESS_WIDTH:  u32                 = 8,
+  param OFFSET_ADDRESS: bit<ADDRESS_WIDTH>  = '0,
+  param BUS_WIDTH:      u32                 = 32,
+  param DATA_WIDTH:     u32                 = BUS_WIDTH,
+  param VALUE_WIDTH:    u32                 = BUS_WIDTH,
+  param VALID_BITS:     bit<DATA_WIDTH>     = '1
+)(
+  i_clk:              input   `_ clock,
+  i_rst:              input   `_ reset,
+  register_if:        modport `_ rggen_register_if::register,
+  i_additional_match: input   `_ logic,
+  bit_field_if:       modport `_ rggen_bit_field_if::register
+) {
+  const WORDS:          u32 = DATA_WIDTH / BUS_WIDTH;
+  const BUS_BYTE_WIDTH: u32 = BUS_WIDTH / 8;
+
+  //  Decode address
+  var match:  logic<WORDS>;
+  var active: logic;
+
+  always_comb {
+    active  = match != '0;
+  }
+
+  for i in 0..WORDS: g_address_decoder {
+    const START_ADDRESS:  bit<ADDRESS_WIDTH>  = OFFSET_ADDRESS
+                                              + (BUS_BYTE_WIDTH * i) as ADDRESS_WIDTH;
+
+    inst u_address_decoder: rggen_address_decoder #(
+      READABLE:       READABLE,
+      WRITABLE:       WRITABLE,
+      ADDRESS_WIDTH:  ADDRESS_WIDTH,
+      BUS_WIDTH:      BUS_WIDTH,
+      START_ADDRESS:  START_ADDRESS,
+      BYTE_SIZE:      BUS_BYTE_WIDTH
+    )(
+      i_address:          register_if.address,
+      i_access:           register_if.access,
+      i_additional_match: i_additional_match,
+      o_match:            match[i]
+    );
+  }
+
+  //  Request
+  var frontdoor_valid:      logic;
+  var frontdoor_read:       logic;
+  var frontdoor_read_mask:  logic<DATA_WIDTH>;
+  var frontdoor_write:      logic;
+  var frontdoor_write_mask: logic<DATA_WIDTH>;
+  var frontdoor_write_data: logic<DATA_WIDTH>;
+  var backdoor_valid:       logic;
+  var backdoor_read_mask:   logic<DATA_WIDTH>;
+  var backdoor_write_mask:  logic<DATA_WIDTH>;
+  var backdoor_write_data:  logic<DATA_WIDTH>;
+  var pending_valid:        logic;
+
+  always_comb {
+    bit_field_if.valid  = frontdoor_valid || backdoor_valid || pending_valid;
+    if backdoor_valid {
+      bit_field_if.read_mask  = backdoor_read_mask;
+      bit_field_if.write_mask = backdoor_write_mask;
+      bit_field_if.write_data = backdoor_write_data;
+    } else {
+      bit_field_if.read_mask  = frontdoor_read_mask;
+      bit_field_if.write_mask = frontdoor_write_mask;
+      bit_field_if.write_data = frontdoor_write_data;
+    }
+  }
+
+  always_comb {
+    frontdoor_read  =
+      READABLE && inside register_if.access {rggen_access::READ};
+    frontdoor_write =
+      WRITABLE && inside register_if.access {rggen_access::POSTED_WRITE, rggen_access::WRITE};
+    for i: u32 in 0..WORDS {
+      case {frontdoor_read && match[i], frontdoor_write && match[i]} {
+        2'b10: {
+          frontdoor_read_mask[i step BUS_WIDTH]   = '1;
+          frontdoor_write_mask[i step BUS_WIDTH]  = '0;
+        }
+        2'b01: {
+          frontdoor_read_mask[i step BUS_WIDTH]   = '0;
+          frontdoor_write_mask[i step BUS_WIDTH]  = register_if.strobe;
+        }
+        default: {
+          frontdoor_read_mask[i step BUS_WIDTH]   = '0;
+          frontdoor_write_mask[i step BUS_WIDTH]  = '0;
+        }
+      }
+    }
+
+    frontdoor_write_data  =
+      if WRITABLE {
+        {register_if.write_data repeat WORDS}
+      } else {
+        '0
+      };
+  }
+
+  //  Response
+  var register_read_data:   logic<BUS_WIDTH>;
+  var bit_field_read_data:  logic<WORDS, BUS_WIDTH>;
+  var bit_field_value:      logic<DATA_WIDTH>;
+
+  always_comb {
+    register_if.active    = active;
+    register_if.ready     = (!backdoor_valid) && active;
+    register_if.status    = rggen_status::OKAY;
+    register_if.read_data = register_read_data;
+    register_if.value     = bit_field_value as VALUE_WIDTH;
+  }
+
+  always_comb {
+    bit_field_read_data = VALID_BITS & bit_field_if.read_data;
+    bit_field_value     = VALID_BITS & bit_field_if.value;
+  }
+
+  inst u_read_data_mux: rggen_mux #(
+    TYPE: logic<BUS_WIDTH>,
+    N:    WORDS
+  )(
+    i_select: match,
+    i_data:   bit_field_read_data,
+    o_data:   register_read_data
+  );
+
+  //  Backdoor
+  #[ifdef(RGGEN_ENABLE_BACKDOOR)] {
+    var clk:    `_ clock_posedge;
+    var rst_n:  `_ reset_async_low;
+
+    always_comb {
+      clk   = i_clk as clock_posedge;
+      rst_n = i_rst as reset_async_low;
+    }
+
+    inst u_backdoor: $sv::rggen_backdoor #(
+      DATA_WIDTH: DATA_WIDTH
+    )(
+      i_clk:              i_clk,
+      i_rst_n:            rst_n,
+      i_frontdoor_valid:  frontdoor_valid,
+      i_frontdoor_ready:  register_if.ready,
+      o_backdoor_valid:   backdoor_valid,
+      o_pending_valid:    pending_valid,
+      o_read_mask:        backdoor_read_mask,
+      o_write_mask:       backdoor_write_mask,
+      o_write_data:       backdoor_write_data,
+      i_read_data:        bit_field_read_data,
+      i_value:            bit_field_value
+    );
+  }
+
+  #[ifndef(RGGEN_ENABLE_BACKDOOR)] {
+    always_comb {
+      backdoor_valid      = '0;
+      backdoor_read_mask  = '0;
+      backdoor_write_mask = '0;
+      backdoor_write_data = '0;
+      pending_valid       = '0;
+    }
+  }
+}

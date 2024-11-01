@@ -1,0 +1,32 @@
+pub module rggen_default_register #(
+  param READABLE:       bit                 = 1,
+  param WRITABLE:       bit                 = 1,
+  param ADDRESS_WIDTH:  u32                 = 8,
+  param OFFSET_ADDRESS: bit<ADDRESS_WIDTH>  = '0,
+  param BUS_WIDTH:      u32                 = 32,
+  param DATA_WIDTH:     u32                 = BUS_WIDTH,
+  param VALUE_WIDTH:    u32                 = DATA_WIDTH,
+  param VALID_BITS:     bit<DATA_WIDTH>     = '1
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  register_if:  modport rggen_register_if::register,
+  bit_field_if: modport rggen_bit_field_if::register
+) {
+  inst u_register_common: rggen_register_common #(
+    READABLE:       READABLE,
+    WRITABLE:       WRITABLE,
+    ADDRESS_WIDTH:  ADDRESS_WIDTH,
+    OFFSET_ADDRESS: OFFSET_ADDRESS,
+    BUS_WIDTH:      BUS_WIDTH,
+    DATA_WIDTH:     DATA_WIDTH,
+    VALUE_WIDTH:    VALUE_WIDTH,
+    VALID_BITS:     VALID_BITS
+  )(
+    i_clk:              i_clk,
+    i_rst:              i_rst,
+    register_if:        register_if,
+    i_additional_match: '1,
+    bit_field_if:       bit_field_if
+  );
+}

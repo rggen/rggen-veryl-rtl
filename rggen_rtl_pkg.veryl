@@ -5,9 +5,6 @@ pub package rggen_rtl_pkg {
     WRITE         = 2'b11
   }
 
-  const RGGEN_ACCESS_DATA_BIT:        u32 = 0;
-  const RGGEN_ACCESS_NON_POSTED_BIT:  u32 = 1;
-
   enum rggen_status {
     OKAY          = 2'b00,
     EXOKAY        = 2'b01,
