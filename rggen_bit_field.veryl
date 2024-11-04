@@ -48,7 +48,7 @@ pub module rggen_bit_field #(
     rd_update =
       read_access &&
       (inside SW_READ_ACTION {rggen_sw_action::READ_CLEAR, rggen_sw_action::READ_SET});
-    rd_update =
+    wr_update =
       write_access                               &&
       SW_WRITE_ACTIVE                            &&
       (write_enable == SW_WRITE_ENABLE_POLARITY) &&
