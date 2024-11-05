@@ -1,0 +1,72 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_apb_adapter #(
+  param ADDRESS_WIDTH:        u32                 = 8,
+  param LOCAL_ADDRESS_WIDTH:  u32                 = 8,
+  param BUS_WIDTH:            u32                 = 32,
+  param REGISTERS:            u32                 = 1,
+  param PRE_DECODE:           bit                 = 0,
+  param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
+  param BYTE_SIZE:            u32                 = 256,
+  param ERROR_STATUS:         bit                 = 0,
+  param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
+  param INSERT_SLICER:        bit                 = 0
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  apb_if:       modport rggen_apb_if::slave,
+  register_if:  modport rggen_register_if::host[REGISTERS]
+) {
+  inst  bus_if:   rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   pready:   logic;
+  var   prdata:   logic<BUS_WIDTH>;
+  var   pslverr:  logic;
+
+  always_comb {
+    bus_if.valid      = apb_if.psel && (!pready);
+    bus_if.access     = if apb_if.pwrite { rggen_access::WRITE } else { rggen_access::READ };
+    bus_if.address    = apb_if.paddr as ADDRESS_WIDTH;
+    bus_if.write_data = apb_if.pwdata;
+    bus_if.strobe     = apb_if.pstrb;
+  }
+
+  always_comb {
+    apb_if.pready   = pready;
+    apb_if.prdata   = prdata;
+    apb_if.pslverr  = pslverr;
+  }
+
+  always_ff {
+    if_reset {
+      pready  = '0;
+    } else {
+      pready  = bus_if.ack();
+    }
+  }
+
+  always_ff {
+    if bus_if.ack() {
+      prdata  = bus_if.read_data;
+      pslverr = bus_if.status[1];
+    }
+  }
+
+  inst  u_adapter_common: rggen_adapter_common #(
+    ADDRESS_WIDTH:        ADDRESS_WIDTH,
+    LOCAL_ADDRESS_WIDTH:  LOCAL_ADDRESS_WIDTH,
+    BUS_WIDTH:            BUS_WIDTH,
+    STROBE_WIDTH:         BUS_WIDTH / 8,
+    REGISTERS:            REGISTERS,
+    PRE_DECODE:           PRE_DECODE,
+    BASE_ADDRESS:         BASE_ADDRESS,
+    BYTE_SIZE:            BYTE_SIZE,
+    ERROR_STATUS:         ERROR_STATUS,
+    DEFAULT_READ_DATA:    DEFAULT_READ_DATA,
+    INSERT_SLICER:        INSERT_SLICER
+  )(
+    i_clk:        i_clk,
+    i_rst:        i_rst,
+    bus_if:       bus_if,
+    register_if:  register_if
+  );
+}

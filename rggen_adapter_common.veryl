@@ -1,0 +1,186 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_adapter_common #(
+  param ADDRESS_WIDTH:        u32                 = 8,
+  param LOCAL_ADDRESS_WIDTH:  u32                 = 8,
+  param BUS_WIDTH:            u32                 = 32,
+  param STROBE_WIDTH:         u32                 = BUS_WIDTH / 8,
+  param REGISTERS:            u32                 = 1,
+  param PRE_DECODE:           bit                 = 0,
+  param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
+  param BYTE_SIZE:            u32                 = 256,
+  param ERROR_STATUS:         bit                 = 0,
+  param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
+  param INSERT_SLICER:        bit                 = 0
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  bus_if:       modport rggen_bus_if::slave,
+  register_if:  modport rggen_register_if::host[REGISTERS]
+) {
+  //  State
+  var busy: logic;
+
+  always_ff {
+    if_reset {
+      busy  = '0;
+    } else if bus_if.ready {
+      busy  = '0;
+    } else if bus_if.valid {
+      busy  = '1;
+    }
+  }
+
+  //  Pre-decode
+  var inside_range: logic;
+
+  if PRE_DECODE : g_pre_decode {
+    inst u_pre_decoder: rggen_address_decoder #(
+      READABLE:       1,
+      WRITABLE:       1,
+      ADDRESS_WIDTH:  ADDRESS_WIDTH,
+      BUS_WIDTH:      BUS_WIDTH,
+      START_ADDRESS:  BASE_ADDRESS,
+      BYTE_SIZE:      BYTE_SIZE
+    )(
+      i_address:          bus_if.address,
+      i_access:           bus_if.access,
+      i_additional_match: '1,
+      o_match:            inside_range
+    );
+  } else {
+    assign  inside_range  = '1;
+  }
+
+  //  Request
+  var bus_valid:      logic;
+  var bus_access:     rggen_access;
+  var bus_address:    logic<LOCAL_ADDRESS_WIDTH>;
+  var bus_write_data: logic<BUS_WIDTH>;
+  var bus_strobe:     logic<STROBE_WIDTH>;
+
+  if INSERT_SLICER : g_request_slicer {
+    always_ff {
+      if_reset {
+        bus_valid = '0;
+      } else if !busy {
+        bus_valid = bus_if.valid && inside_range;
+      } else {
+        bus_valid = '0;
+      }
+    }
+
+    always_ff {
+      if_reset {
+        bus_access      = 0 as rggen_access;
+        bus_address     = '0;
+        bus_write_data  = '0;
+        bus_strobe      = '0;
+      } else if bus_if.valid && (!busy) {
+        bus_access      = bus_if.access;
+        bus_address     = get_local_address(bus_if.address);
+        bus_write_data  = bus_if.write_data;
+        bus_strobe      = bus_if.strobe;
+      }
+    }
+  } else {
+    always_comb {
+      bus_valid       = bus_if.valid;
+      bus_access      = bus_if.access;
+      bus_address     = get_local_address(bus_if.address);
+      bus_write_data  = bus_if.write_data;
+      bus_strobe      = bus_if.strobe;
+    }
+  }
+
+  for i in 0..REGISTERS: g_request {
+    always_comb {
+      register_if[i].valid      = bus_valid;
+      register_if[i].access     = bus_access;
+      register_if[i].address    = bus_address;
+      register_if[i].write_data = bus_write_data;
+      register_if[i].strobe     = get_strobe(bus_strobe);
+    }
+  }
+
+  function get_local_address(
+    address:  input logic<ADDRESS_WIDTH>
+  ) -> logic<LOCAL_ADDRESS_WIDTH> {
+    var local_address:  logic<ADDRESS_WIDTH>;
+
+    if BASE_ADDRESS[0+:LOCAL_ADDRESS_WIDTH] == '0 {
+      local_address = address;
+    } else {
+      local_address = address - BASE_ADDRESS;
+    }
+
+    return local_address[0+:LOCAL_ADDRESS_WIDTH];
+  }
+
+  function get_strobe(
+    strobe: input logic<STROBE_WIDTH>
+  ) -> logic<BUS_WIDTH> {
+    var register_strobe:  logic<BUS_WIDTH>;
+
+    if STROBE_WIDTH == BUS_WIDTH {
+      register_strobe = strobe as BUS_WIDTH;
+    } else {
+      for i: u32 in 0..STROBE_WIDTH {
+        register_strobe[i step 8] = {strobe[i] repeat 8};
+      }
+    }
+
+    return register_strobe;
+  }
+
+  //  Response
+  struct rggen_response {
+    status:     rggen_status,
+    read_data:  logic<BUS_WIDTH>
+  }
+
+  var register_active:    logic<REGISTERS>;
+  var register_ready:     logic<REGISTERS>;
+  var register_response:  rggen_response<REGISTERS>;
+  var bus_inactive:       logic;
+  var bus_response:       rggen_response;
+
+  for i in 0..REGISTERS: g_response {
+    always_comb {
+      register_active[i]              = register_if[i].active;
+      register_ready[i]               = register_if[i].ready;
+      register_response[i].status     = register_if[i].status;
+      register_response[i].read_data  = register_if[i].read_data;
+    }
+  }
+
+  always_comb {
+    bus_inactive  = (!inside_range) || (register_active != '0);
+  }
+
+  inst u_response_mux: rggen_mux #(
+    TYPE: rggen_response,
+    N:    REGISTERS
+  )(
+    i_select: register_active,
+    i_data:   register_response,
+    o_data:   bus_response
+  );
+
+  always_comb {
+    bus_if.ready  =
+      if INSERT_SLICER {
+        busy && ((register_ready != '0) || bus_inactive)
+      } else {
+        (register_ready != '0) || bus_inactive
+      };
+
+    if bus_inactive {
+      bus_if.status     = if ERROR_STATUS { rggen_status::SLAVE_ERROR } else { rggen_status::OKAY };
+      bus_if.read_data  = DEFAULT_READ_DATA;
+    } else {
+      bus_if.status     = bus_response.status;
+      bus_if.read_data  = bus_response.read_data;
+    }
+  }
+}

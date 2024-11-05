@@ -1,0 +1,38 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_apb_bridge #(
+  param ADDRESS_WIDTH:  u32 = 8
+)(
+  i_clk:  input   clock,
+  i_rst:  input   reset,
+  bus_if: modport rggen_bus_if::slave,
+  apb_if: modport rggen_apb_if::master
+) {
+  var busy: logic;
+
+  always_comb {
+    apb_if.psel     = bus_if.valid;
+    apb_if.penable  = bus_if.valid && busy;
+    apb_if.paddr    = bus_if.address as ADDRESS_WIDTH;
+    apb_if.pprot    = '0;
+    apb_if.pwrite   = inside bus_if.access {rggen_access::POSTED_WRITE, rggen_access::WRITE};
+    apb_if.pstrb    = bus_if.strobe;
+    apb_if.pwdata   = bus_if.write_data;
+  }
+
+  always_comb {
+    bus_if.ready      = apb_if.pready && busy;
+    bus_if.status     = if apb_if.pslverr { rggen_status::SLAVE_ERROR } else { rggen_status::OKAY };
+    bus_if.read_data  = apb_if.prdata;
+  }
+
+  always_ff {
+    if_reset {
+      busy  = '0;
+    } else if bus_if.ack() {
+      busy  = '0;
+    } else if bus_if.valid {
+      busy  = '1;
+    }
+  }
+}

@@ -1,0 +1,54 @@
+pub interface rggen_apb_if #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param BUS_WIDTH:      u32 = 32
+) {
+  var psel:     logic;
+  var penable:  logic;
+  var paddr:    logic<ADDRESS_WIDTH>;
+  var pprot:    logic<3>;
+  var pwrite:   logic;
+  var pstrb:    logic<BUS_WIDTH/8>;
+  var pwdata:   logic<BUS_WIDTH>;
+  var pready:   logic;
+  var prdata:   logic<BUS_WIDTH>;
+  var pslverr:  logic;
+
+  modport master {
+    psel:     output,
+    penable:  output,
+    paddr:    output,
+    pprot:    output,
+    pwrite:   output,
+    pstrb:    output,
+    pwdata:   output,
+    pready:   input,
+    prdata:   input,
+    pslverr:  input
+  }
+
+  modport slave {
+    psel:     input,
+    penable:  input,
+    paddr:    input,
+    pprot:    input,
+    pwrite:   input,
+    pstrb:    input,
+    pwdata:   input,
+    pready:   output,
+    prdata:   output,
+    pslverr:  output
+  }
+
+  modport monitor {
+    psel:     input,
+    penable:  input,
+    paddr:    input,
+    pprot:    input,
+    pwrite:   input,
+    pstrb:    input,
+    pwdata:   input,
+    pready:   input,
+    prdata:   input,
+    pslverr:  input
+  }
+}
