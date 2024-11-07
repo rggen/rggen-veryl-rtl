@@ -1,0 +1,166 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_axi4lite_adapter #(
+  param ID_WIDTH:             u32                 = 0,
+  param ADDRESS_WIDTH:        u32                 = 8,
+  param LOCAL_ADDRESS_WIDTH:  u32                 = ADDRESS_WIDTH,
+  param BUS_WIDTH:            u32                 = 32,
+  param REGISTERS:            u32                 = 1,
+  param PRE_DECODE:           bit                 = 0,
+  param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
+  param BYTE_SIZE:            u32                 = 256,
+  param ERROR_STATUS:         bit                 = 0,
+  param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
+  param INSERT_SLICER:        bit                 = 0,
+  param WRITE_FIRST:          bit                 = 1
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  axi4lite_if:  modport rggen_axi4lite_if::slave,
+  register_if:  modport rggen_register_if::host[REGISTERS]
+) {
+  inst  buffer_if:      rggen_axi4lite_if #(ID_WIDTH, ADDRESS_WIDTH, BUS_WIDTH);
+  inst  bus_if:         rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   request_valid:  logic<2, 2>;
+  var   response_valid: logic<2>;
+  var   id:             logic<clip_width(ID_WIDTH)>;
+  var   read_data:      logic<BUS_WIDTH>;
+  var   status:         logic<2>;
+
+  //  Skid buffer
+  inst u_buffer: rggen_axi4lite_skid_buffer #(
+    ID_WIDTH:       ID_WIDTH,
+    ADDRESS_WIDTH:  ADDRESS_WIDTH,
+    BUS_WIDTH:      BUS_WIDTH
+  )(
+    i_clk:      i_clk,
+    i_rst:      i_rst,
+    slave_if:   axi4lite_if,
+    master_if:  buffer_if
+  );
+
+  //  Request
+  always_comb {
+    buffer_if.awready = bus_if.ready && request_valid[0][0] && (response_valid == '0);
+    buffer_if.wready  = bus_if.ready && request_valid[0][0] && (response_valid == '0);
+    buffer_if.arready = bus_if.ready && request_valid[0][1] && (response_valid == '0);
+  }
+
+  always_comb {
+    bus_if.valid      = (request_valid[0] != '0) && (response_valid == '0);
+    bus_if.write_data = buffer_if.wdata;
+    bus_if.strobe     = buffer_if.wstrb;
+    if request_valid[0][0] {
+      bus_if.access     = rggen_access::WRITE;
+      bus_if.address    = buffer_if.awaddr;
+    } else {
+      bus_if.access     = rggen_access::READ;
+      bus_if.address    = buffer_if.araddr;
+    }
+  }
+
+  always_comb {
+    request_valid[0]  =
+      if request_valid[1] != '0 {
+        request_valid[1]
+      } else {
+        get_request_valid(
+          buffer_if.awvalid, buffer_if.wvalid,
+          buffer_if.arvalid
+        )
+      };
+  }
+
+  always_ff {
+    if_reset {
+      request_valid[1]  = '0;
+    } else if bus_if.ready {
+      request_valid[1]  = '0;
+    } else if bus_if.valid {
+      request_valid[1]  = request_valid[0];
+    }
+  }
+
+  function get_request_valid(
+    awvalid:  input logic,
+    wvalid:   input logic,
+    arvalid:  input logic
+  ) -> logic<2> {
+    var valid:  logic<2>;
+
+    if WRITE_FIRST {
+      valid[0]  = awvalid && wvalid;
+      valid[1]  = arvalid && (!valid[0]);
+    } else {
+      valid[1]  = arvalid;
+      valid[0]  = awvalid && wvalid && (!valid[1]);
+    }
+
+    return valid;
+  }
+
+  //  Response
+  always_comb {
+    buffer_if.bvalid  = response_valid[0];
+    buffer_if.bid     = id;
+    buffer_if.bresp   = status;
+    buffer_if.rvalid  = response_valid[1];
+    buffer_if.rid     = id;
+    buffer_if.rresp   = status;
+    buffer_if.rdata   = read_data;
+  }
+
+  always_ff {
+    if_reset {
+      response_valid  = '0;
+    } else if buffer_if.bresp_ack() || buffer_if.rresp_ack() {
+      response_valid  = '0;
+    } else if bus_if.ack() {
+      case bus_if.access {
+        rggen_access::READ: response_valid  = 2'b10;
+        default:            response_valid  = 2'b01;
+      }
+    }
+  }
+
+  if ID_WIDTH >= 1: g_id {
+    always_ff {
+      if_reset {
+        id  = '0;
+      } else if buffer_if.awaddr_ack() {
+        id  = buffer_if.awid;
+      } else if buffer_if.araddr_ack() {
+        id  = buffer_if.arid;
+      }
+    }
+  } else {
+    assign  id  = '0;
+  }
+
+  always_ff {
+    if bus_if.ack() {
+      status    = bus_if.status;
+      read_data = bus_if.read_data;
+    }
+  }
+
+  //  Adapter common
+  inst  u_adapter_common: rggen_adapter_common #(
+    ADDRESS_WIDTH:        ADDRESS_WIDTH,
+    LOCAL_ADDRESS_WIDTH:  LOCAL_ADDRESS_WIDTH,
+    BUS_WIDTH:            BUS_WIDTH,
+    STROBE_WIDTH:         BUS_WIDTH / 8,
+    REGISTERS:            REGISTERS,
+    PRE_DECODE:           PRE_DECODE,
+    BASE_ADDRESS:         BASE_ADDRESS,
+    BYTE_SIZE:            BYTE_SIZE,
+    ERROR_STATUS:         ERROR_STATUS,
+    DEFAULT_READ_DATA:    DEFAULT_READ_DATA,
+    INSERT_SLICER:        INSERT_SLICER
+  )(
+    i_clk:        i_clk,
+    i_rst:        i_rst,
+    bus_if:       bus_if,
+    register_if:  register_if
+  );
+}

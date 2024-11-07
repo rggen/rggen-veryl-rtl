@@ -1,0 +1,144 @@
+pub interface rggen_axi4lite_if #(
+  param ID_WIDTH:       u32 = 0,
+  param ADDRESS_WIDTH:  u32 = 16,
+  param BUS_WIDTH:      u32 = 32
+) {
+  const IDW:  u32 = rggen_rtl_pkg::clip_width(ID_WIDTH);
+
+  var awready:  logic;
+  var awvalid:  logic;
+  var awid:     logic<IDW>;
+  var awaddr:   logic<ADDRESS_WIDTH>;
+  var awprot:   logic<3>;
+  var wready:   logic;
+  var wvalid:   logic;
+  var wdata:    logic<BUS_WIDTH>;
+  var wstrb:    logic<BUS_WIDTH/8>;
+  var bready:   logic;
+  var bvalid:   logic;
+  var bid:      logic<IDW>;
+  var bresp:    logic<2>;
+  var arready:  logic;
+  var arvalid:  logic;
+  var arid:     logic<IDW>;
+  var araddr:   logic<ADDRESS_WIDTH>;
+  var arprot:   logic<3>;
+  var rready:   logic;
+  var rvalid:   logic;
+  var rid:      logic<IDW>;
+  var rresp:    logic<2>;
+  var rdata:    logic<BUS_WIDTH>;
+
+  function awaddr_ack() -> logic {
+    return awvalid && awready;
+  }
+
+  function wdata_ack() -> logic {
+    return wvalid && wready;
+  }
+
+  function bresp_ack() -> logic {
+    return bvalid && bready;
+  }
+
+  function araddr_ack() -> logic {
+    return arvalid && arready;
+  }
+
+  function rresp_ack() -> logic {
+    return rvalid && rready;
+  }
+
+  modport master {
+    awready:    input,
+    awvalid:    output,
+    awid:       output,
+    awaddr:     output,
+    awprot:     output,
+    wready:     input,
+    wvalid:     output,
+    wdata:      output,
+    wstrb:      output,
+    bready:     output,
+    bvalid:     input,
+    bid:        input,
+    bresp:      input,
+    arready:    input,
+    arvalid:    output,
+    arid:       output,
+    araddr:     output,
+    arprot:     output,
+    rready:     output,
+    rvalid:     input,
+    rid:        input,
+    rresp:      input,
+    rdata:      input,
+    awaddr_ack: import,
+    wdata_ack:  import,
+    bresp_ack:  import,
+    araddr_ack: import,
+    rresp_ack:  import
+  }
+
+  modport slave {
+    awready:    output,
+    awvalid:    input,
+    awid:       input,
+    awaddr:     input,
+    awprot:     input,
+    wready:     output,
+    wvalid:     input,
+    wdata:      input,
+    wstrb:      input,
+    bready:     input,
+    bvalid:     output,
+    bid:        output,
+    bresp:      output,
+    arready:    output,
+    arvalid:    input,
+    arid:       input,
+    araddr:     input,
+    arprot:     input,
+    rready:     input,
+    rvalid:     output,
+    rid:        output,
+    rresp:      output,
+    rdata:      output,
+    awaddr_ack: import,
+    wdata_ack:  import,
+    bresp_ack:  import,
+    araddr_ack: import,
+    rresp_ack:  import
+  }
+
+  modport monitor {
+    awready:    input,
+    awvalid:    input,
+    awid:       input,
+    awaddr:     input,
+    awprot:     input,
+    wready:     input,
+    wvalid:     input,
+    wdata:      input,
+    wstrb:      input,
+    bready:     input,
+    bvalid:     input,
+    bid:        input,
+    bresp:      input,
+    arready:    input,
+    arvalid:    input,
+    arid:       input,
+    araddr:     input,
+    arprot:     input,
+    rready:     input,
+    rvalid:     input,
+    rid:        input,
+    rresp:      input,
+    rdata:      input,
+    awaddr_ack: import,
+    wdata_ack:  import,
+    bresp_ack:  import,
+    araddr_ack: import,
+    rresp_ack:  import
+  }
+}

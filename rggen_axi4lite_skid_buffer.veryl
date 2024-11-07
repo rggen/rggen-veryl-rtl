@@ -1,0 +1,182 @@
+pub module rggen_axi4lite_skid_buffer #(
+  param ID_WIDTH:       u32 = 0,
+  param ADDRESS_WIDTH:  u32 = 8,
+  param BUS_WIDTH:      u32 = 32
+)(
+  i_clk:      input   clock,
+  i_rst:      input   reset,
+  slave_if:   modport rggen_axi4lite_if::slave,
+  master_if:  modport rggen_axi4lite_if::master
+) {
+  const IDW:  u32 = rggen_rtl_pkg::clip_width(ID_WIDTH);
+
+  //  Write address channel
+  var awvalid:  logic;
+  var awid:     logic<IDW>;
+  var awaddr:   logic<ADDRESS_WIDTH>;
+  var awprot:   logic<3>;
+  var awlatch:  logic;
+
+  always_comb {
+    slave_if.awready  = !awvalid;
+    master_if.awvalid = slave_if.awvalid || awvalid;
+    if awvalid {
+      master_if.awid    = awid;
+      master_if.awaddr  = awaddr;
+      master_if.awprot  = awprot;
+    } else {
+      master_if.awid    = slave_if.awid;
+      master_if.awaddr  = slave_if.awaddr as ADDRESS_WIDTH;
+      master_if.awprot  = slave_if.awprot;
+    }
+  }
+
+  always_ff {
+    if_reset {
+      awvalid = '0;
+    } else if master_if.awaddr_ack() {
+      awvalid = '0;
+    } else if slave_if.awaddr_ack() {
+      awvalid = '1;
+    }
+  }
+
+  always_comb {
+    awlatch = slave_if.awaddr_ack() && (!master_if.awready);
+  }
+
+  if ID_WIDTH >= 1: g_awid {
+    always_ff {
+      if_reset {
+        awid  = '0;
+      } else if awlatch {
+        awid  = slave_if.awid;
+      }
+    }
+  } else {
+    assign  awid  = '0;
+  }
+
+  always_ff {
+    if_reset {
+      awaddr  = '0;
+      awprot  = '0;
+    } else if awlatch {
+      awaddr  = slave_if.awaddr as ADDRESS_WIDTH;
+      awprot  = slave_if.awprot;
+    }
+  }
+
+  //  Write data channel
+  var wvalid: logic;
+  var wdata:  logic<BUS_WIDTH>;
+  var wstrb:  logic<BUS_WIDTH/8>;
+  var wlatch: logic;
+
+  always_comb {
+    slave_if.wready   = !wvalid;
+    master_if.wvalid  = slave_if.wvalid || wvalid;
+    if (wvalid) {
+      master_if.wdata = wdata;
+      master_if.wstrb = wstrb;
+    } else {
+      master_if.wdata = slave_if.wdata;
+      master_if.wstrb = slave_if.wstrb;
+    }
+  }
+
+  always_ff {
+    if_reset {
+      wvalid  = '0;
+    } else if master_if.wdata_ack() {
+      wvalid  = '0;
+    } else if slave_if.wdata_ack() {
+      wvalid  = '1;
+    }
+  }
+
+  always_comb {
+    wlatch  = slave_if.wdata_ack() && (!master_if.wready);
+  }
+
+  always_ff {
+    if wlatch {
+      wdata = slave_if.wdata;
+      wstrb = slave_if.wstrb;
+    }
+  }
+
+  //  Write response channel
+  always_comb {
+    master_if.bready  = slave_if.bready;
+    slave_if.bvalid   = master_if.bvalid;
+    slave_if.bid      = master_if.bid;
+    slave_if.bresp    = master_if.bresp;
+  }
+
+  //  Read address channel
+  var arvalid:  logic;
+  var arid:     logic<IDW>;
+  var araddr:   logic<ADDRESS_WIDTH>;
+  var arprot:   logic<3>;
+  var arlatch:  logic;
+
+  always_comb {
+    slave_if.arready  = !arvalid;
+    master_if.arvalid = slave_if.arvalid || arvalid;
+    if (arvalid) {
+      master_if.arid    = arid;
+      master_if.araddr  = araddr;
+      master_if.arprot  = arprot;
+    } else {
+      master_if.arid    = slave_if.arid;
+      master_if.araddr  = slave_if.araddr as ADDRESS_WIDTH;
+      master_if.arprot  = slave_if.arprot;
+    }
+  }
+
+  always_ff {
+    if_reset {
+      arvalid = '0;
+    } else if master_if.araddr_ack() {
+      arvalid = '0;
+    } else if slave_if.araddr_ack() {
+      arvalid = '1;
+    }
+  }
+
+  always_comb {
+    arlatch = slave_if.araddr_ack() && (!master_if.arready);
+  }
+
+  if ID_WIDTH >= 1: g_arid {
+    always_ff {
+      if_reset {
+        arid  = '0;
+      } else if awlatch {
+        arid  = slave_if.arid;
+      }
+    }
+  } else {
+    assign  arid  = '0;
+  }
+
+  always_ff {
+    if_reset {
+      araddr  = '0;
+      arprot  = '0;
+    } else if arlatch {
+      araddr  = slave_if.araddr as ADDRESS_WIDTH;
+      arprot  = slave_if.arprot;
+    }
+  }
+
+  //  Read response channel
+  always_comb {
+    master_if.rready  = slave_if.rready;
+    slave_if.rvalid   = master_if.rvalid;
+    slave_if.rid      = master_if.rid;
+    slave_if.rresp    = master_if.rresp;
+    slave_if.rdata    = master_if.rdata;
+  }
+}

@@ -1,0 +1,72 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_axi4lite_bridge #(
+  param ADDRESS_WIDTH:  u32 = 16
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  bus_if:       modport rggen_bus_if::slave,
+  axi4lite_if:  modport rggen_axi4lite_if::master
+) {
+  var request_done: logic<2>;
+
+  //  Request
+  always_comb {
+    case bus_if.access {
+      rggen_access::READ: {
+        axi4lite_if.awvalid = '0;
+        axi4lite_if.wvalid  = '0;
+        axi4lite_if.arvalid = bus_if.valid && (!request_done[0]);
+      }
+      default: {
+        axi4lite_if.awvalid = bus_if.valid && (!request_done[0]);
+        axi4lite_if.wvalid  = bus_if.valid && (!request_done[1]);
+        axi4lite_if.arvalid = '0;
+      }
+    }
+
+    axi4lite_if.awid    = '0;
+    axi4lite_if.awaddr  = bus_if.address as ADDRESS_WIDTH;
+    axi4lite_if.awprot  = '0;
+    axi4lite_if.arid    = '0;
+    axi4lite_if.wdata   = bus_if.write_data;
+    axi4lite_if.wstrb   = bus_if.strobe;
+    axi4lite_if.araddr  = bus_if.address as ADDRESS_WIDTH;
+    axi4lite_if.arprot  = '0;
+  }
+
+  always_ff {
+    if_reset {
+      request_done  = '0;
+    } else if bus_if.ready {
+      request_done  = '0;
+    } else {
+      if axi4lite_if.awaddr_ack() || axi4lite_if.araddr_ack() {
+        request_done[0] = '1;
+      }
+      if axi4lite_if.wdata_ack() {
+        request_done[1] = '1;
+      }
+    }
+  }
+
+  //  Response
+  always_comb {
+    axi4lite_if.bready  = request_done[0] && request_done[1];
+    axi4lite_if.rready  = request_done[0];
+  }
+
+  always_comb {
+    case bus_if.access {
+      rggen_access::READ: {
+        bus_if.ready  = request_done[0] && axi4lite_if.rvalid;
+        bus_if.status = axi4lite_if.rresp as rggen_status;
+      }
+      default: {
+        bus_if.ready  = request_done[0] && request_done[1] && axi4lite_if.bvalid;
+        bus_if.status = axi4lite_if.bresp as rggen_status;
+      }
+    }
+    bus_if.read_data  = axi4lite_if.rdata;
+  }
+}
