@@ -1,0 +1,42 @@
+import  rggen_rtl_pkg::*;
+
+pub module rggen_wishbone_bridge #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param USE_STALL:      bit = 1
+)(
+  i_clk:        input   clock,
+  i_rst:        input   reset,
+  bus_if:       modport rggen_bus_if::slave,
+  wishbone_if:  modport rggen_wishbone_if::master
+) {
+  var request_done: logic;
+
+  always_comb {
+    wishbone_if.cyc   = bus_if.valid;
+    wishbone_if.stb   = bus_if.valid && (!request_done);
+    wishbone_if.adr   = bus_if.address as ADDRESS_WIDTH;
+    wishbone_if.we    = bus_if.access != rggen_access::READ;
+    wishbone_if.dat_w = bus_if.write_data;
+    wishbone_if.sel   = bus_if.strobe;
+  }
+
+  always_comb {
+    bus_if.ready      = wishbone_if.ack || wishbone_if.err || wishbone_if.rty;
+    bus_if.status     = if wishbone_if.ack { rggen_status::OKAY } else { rggen_status::SLAVE_ERROR };
+    bus_if.read_data  = wishbone_if.dat_r;
+  }
+
+  if USE_STALL: g_stall {
+    always_ff {
+      if_reset {
+        request_done  = '0;
+      } else if bus_if.ack() {
+        request_done  = '0;
+      } else if wishbone_if.stb && (!wishbone_if.stall) {
+        request_done  = '1;
+      }
+    }
+  } else {
+    assign  request_done  = '0;
+  }
+}

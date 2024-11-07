@@ -1,0 +1,58 @@
+pub interface rggen_wishbone_if #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param BUS_WIDTH:      u32 = 32
+) {
+  var cyc:    logic;
+  var stb:    logic;
+  var stall:  logic;
+  var adr:    logic<ADDRESS_WIDTH>;
+  var we:     logic;
+  var sel:    logic<BUS_WIDTH/8>;
+  var dat_w:  logic<BUS_WIDTH>;
+  var ack:    logic;
+  var err:    logic;
+  var rty:    logic;
+  var dat_r:  logic<BUS_WIDTH>;
+
+  modport master {
+    cyc:    output,
+    stb:    output,
+    stall:  input,
+    adr:    output,
+    we:     output,
+    sel:    output,
+    dat_w:  output,
+    ack:    input,
+    err:    input,
+    rty:    input,
+    dat_r:  input
+  }
+
+  modport slave {
+    cyc:    input,
+    stb:    input,
+    stall:  output,
+    adr:    input,
+    we:     input,
+    sel:    input,
+    dat_w:  input,
+    ack:    output,
+    err:    output,
+    rty:    output,
+    dat_r:  output
+  }
+
+  modport monitor {
+    cyc:    input,
+    stb:    input,
+    stall:  input,
+    adr:    input,
+    we:     input,
+    sel:    input,
+    dat_w:  input,
+    ack:    input,
+    err:    input,
+    rty:    input,
+    dat_r:  input
+  }
+}
