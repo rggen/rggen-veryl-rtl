@@ -173,13 +173,13 @@ pub module rggen_bit_field #(
 //--------------------------------------------------------------
 //  Body
 //--------------------------------------------------------------
-  var sw_update:    logic<2>;
-  var sw_wrte_done: logic;
-  var hw_update:    logic;
-  var wr_trigger:   logic;
-  var rd_trigger:   logic;
-  var value:        logic<WIDTH>;
-  var read_data:    logic<WIDTH>;
+  var sw_update:      logic<2>;
+  var sw_write_done:  logic;
+  var hw_update:      logic;
+  var wr_trigger:     logic;
+  var rd_trigger:     logic;
+  var value:          logic<WIDTH>;
+  var read_data:      logic<WIDTH>;
 
   always_comb {
     bit_field_if.read_data  = read_data & i_mask;
@@ -197,7 +197,7 @@ pub module rggen_bit_field #(
     sw_update =
       get_sw_update(
         bit_field_if.is_read_access(),
-        bit_field_if.is_write_access(), i_sw_write_enable, sw_wrte_done
+        bit_field_if.is_write_access(), i_sw_write_enable, sw_write_done
       );
     hw_update =
       get_hw_update(
@@ -208,13 +208,13 @@ pub module rggen_bit_field #(
   if STORAGE && SW_WRITE_ONCE : g_sw_write_onece {
     always_ff {
       if_reset {
-        sw_wrte_done  = '0;
+        sw_write_done  = '0;
       } else if sw_update[1] {
-        sw_wrte_done  = '1;
+        sw_write_done  = '1;
       }
     }
   } else {
-    assign  sw_wrte_done  = '0;
+    assign  sw_write_done  = '0;
   }
 
   if TRIGGER && SW_WRITE_ACTIVE : g_wr_trigger {
