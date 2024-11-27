@@ -22,7 +22,7 @@ pub module rggen_bit_field #(
   o_read_trigger:     output  logic,
   i_sw_write_enable:  input   logic,
   i_hw_write_enable:  input   logic,
-  i_hw_wirte_data:    input   logic<WIDTH>,
+  i_hw_write_data:    input   logic<WIDTH>,
   i_hw_set:           input   logic<HW_SET_WIDTH>,
   i_hw_clear:         input   logic<HW_CLEAR_WIDTH>,
   i_value:            input   logic<WIDTH>,
@@ -249,7 +249,7 @@ pub module rggen_bit_field #(
         value =
           get_next_value(
             value, sw_update, bit_field_if.write_mask, bit_field_if.write_data,
-            i_hw_write_enable, i_hw_wirte_data, i_hw_set, i_hw_clear
+            i_hw_write_enable, i_hw_write_data, i_hw_set, i_hw_clear
           );
       }
     }
