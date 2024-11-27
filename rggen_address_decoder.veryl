@@ -14,7 +14,7 @@ pub module rggen_address_decoder #(
   o_match:            output  logic
 ) {
   const LSB:          u32                 = $clog2(BUS_WIDTH / 8);
-  const MSB:          u32                 = ADDRESS_WIDTH - LSB;
+  const MSB:          u32                 = ADDRESS_WIDTH - 1;
   const END_ADDRESS:  bit<ADDRESS_WIDTH>  = START_ADDRESS
                                           + (BYTE_SIZE - 1) as ADDRESS_WIDTH;
 

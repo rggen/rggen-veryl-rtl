@@ -73,6 +73,8 @@ pub module rggen_register_common #(
   }
 
   always_comb {
+    frontdoor_valid = active && register_if.valid;
+
     frontdoor_read  =
       READABLE && inside register_if.access {rggen_access::READ};
     frontdoor_write =

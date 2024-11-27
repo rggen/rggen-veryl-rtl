@@ -155,7 +155,7 @@ pub module rggen_adapter_common #(
   }
 
   always_comb {
-    bus_inactive  = (!inside_range) || (register_active != '0);
+    bus_inactive  = (!inside_range) || (register_active == '0);
   }
 
   inst u_response_mux: rggen_mux #(
