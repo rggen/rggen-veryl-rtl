@@ -7,19 +7,18 @@ pub module rggen_indirect_register #(
   param DATA_WIDTH:           u32                       = BUS_WIDTH,
   param VALUE_WIDTH:          u32                       = DATA_WIDTH,
   param VALID_BITS:           bit<DATA_WIDTH>           = '1,
-  param INDIRECT_INDEX_WIDTH: u32                       = 1,
-  param INDIRECT_INDEX_VALUE: bit<INDIRECT_INDEX_WIDTH> = '0
+  param INDIRECT_MATCH_WIDTH: u32                       = 1
 )(
   i_clk:            input   clock,
   i_rst:            input   reset,
   register_if:      modport rggen_register_if::register,
-  i_indirect_index: input   logic<INDIRECT_INDEX_WIDTH>,
+  i_indirect_match: input   logic<INDIRECT_MATCH_WIDTH>,
   bit_field_if:     modport rggen_bit_field_if::register
 ){
   var index_match: logic;
 
   always_comb {
-    index_match = i_indirect_index == INDIRECT_INDEX_VALUE;
+    index_match = i_indirect_match == '1;
   }
 
   inst u_register_common: rggen_register_common #(
