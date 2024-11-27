@@ -1,9 +1,11 @@
+import  rggen_rtl_pkg::*;
+
 pub interface rggen_axi4lite_if #(
   param ID_WIDTH:       u32 = 0,
   param ADDRESS_WIDTH:  u32 = 16,
   param BUS_WIDTH:      u32 = 32
 ) {
-  const IDW:  u32 = rggen_rtl_pkg::clip_width(ID_WIDTH);
+  const IDW:  u32 = clip_width(ID_WIDTH);
 
   var awready:  logic;
   var awvalid:  logic;

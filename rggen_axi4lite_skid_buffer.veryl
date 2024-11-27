@@ -1,3 +1,5 @@
+import  rggen_rtl_pkg::*;
+
 pub module rggen_axi4lite_skid_buffer #(
   param ID_WIDTH:       u32 = 0,
   param ADDRESS_WIDTH:  u32 = 8,
@@ -8,7 +10,7 @@ pub module rggen_axi4lite_skid_buffer #(
   slave_if:   modport rggen_axi4lite_if::slave,
   master_if:  modport rggen_axi4lite_if::master
 ) {
-  const IDW:  u32 = rggen_rtl_pkg::clip_width(ID_WIDTH);
+  const IDW:  u32 = clip_width(ID_WIDTH);
 
   //  Write address channel
   var awvalid:  logic;
@@ -153,7 +155,7 @@ pub module rggen_axi4lite_skid_buffer #(
     always_ff {
       if_reset {
         arid  = '0;
-      } else if awlatch {
+      } else if arlatch {
         arid  = slave_if.arid;
       }
     }
