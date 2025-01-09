@@ -158,9 +158,10 @@ pub module rggen_adapter_common #(
     bus_inactive  = (!inside_range) || (register_active == '0);
   }
 
-  inst u_response_mux: rggen_mux #(
-    TYPE: rggen_response,
-    N:    REGISTERS
+  inst u_response_mux: $std::mux #(
+    DATA_TYPE:  rggen_response,
+    ENTRIES:    REGISTERS,
+    KIND:       $std::selector_pkg::selector_kind::ONEHOT
   )(
     i_select: register_active,
     i_data:   register_response,

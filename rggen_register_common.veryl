@@ -122,9 +122,10 @@ pub module rggen_register_common #(
     bit_field_value     = VALID_BITS & bit_field_if.value;
   }
 
-  inst u_read_data_mux: rggen_mux #(
-    TYPE: logic<BUS_WIDTH>,
-    N:    WORDS
+  inst u_read_data_mux: $std::mux #(
+    WIDTH:      BUS_WIDTH,
+    ENTRIES:    WORDS,
+    KIND:       $std::selector_pkg::selector_kind::ONEHOT
   )(
     i_select: match,
     i_data:   bit_field_read_data,
