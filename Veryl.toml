@@ -7,3 +7,7 @@ repository  = "https://github.com/rggen/rggen-veryl-rtl"
 
 [format]
 indent_width  = 2
+
+[publish]
+bump_commit    = true
+publish_commit = true
