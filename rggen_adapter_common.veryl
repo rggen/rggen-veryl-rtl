@@ -9,6 +9,7 @@ pub module rggen_adapter_common #(
   param PRE_DECODE:           bit                 = 0,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
+  param USE_READ_STROBE:      bit                 = 0,
   param ERROR_STATUS:         bit                 = 0,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
   param INSERT_SLICER:        bit                 = 0
@@ -99,7 +100,7 @@ pub module rggen_adapter_common #(
       register_if[i].access     = bus_access;
       register_if[i].address    = bus_address;
       register_if[i].write_data = bus_write_data;
-      register_if[i].strobe     = get_strobe(bus_strobe);
+      register_if[i].strobe     = get_strobe(bus_access, bus_strobe);
     }
   }
 
@@ -118,11 +119,14 @@ pub module rggen_adapter_common #(
   }
 
   function get_strobe(
+    access: input rggen_access,
     strobe: input logic<STROBE_WIDTH>
   ) -> logic<BUS_WIDTH> {
     var register_strobe:  logic<BUS_WIDTH>;
 
-    if STROBE_WIDTH == BUS_WIDTH {
+    if access == rggen_access::READ && (!USE_READ_STROBE) {
+      register_strobe = '1;
+    } else if STROBE_WIDTH == BUS_WIDTH {
       register_strobe = strobe as BUS_WIDTH;
     } else {
       for i: u32 in 0..STROBE_WIDTH {

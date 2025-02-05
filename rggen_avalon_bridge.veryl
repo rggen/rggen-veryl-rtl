@@ -1,0 +1,43 @@
+import  rggen_rtl_pkg::*;
+
+module rggen_avalon_bridge #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param READ_STROBE:    bit = 1
+)(
+  i_clk:      input clock,
+  i_rst:      input reset,
+  bus_if:     modport rggen_bus_if::slave,
+  avalon_if:  modport rggen_avalon_if::host
+) {
+  var request_done: logic;
+
+  always_comb {
+    if (bus_if.access == rggen_access::READ) {
+      avalon_if.read        = bus_if.valid && (!request_done);
+      avalon_if.write       = '0;
+      avalon_if.byteenable  = if READ_STROBE { bus_if.strobe } else { '1 };
+    } else {
+      avalon_if.read        = '0;
+      avalon_if.write       = bus_if.valid && (!request_done);
+      avalon_if.byteenable  = bus_if.strobe;
+    }
+    avalon_if.address   = bus_if.address;
+    avalon_if.writedata = bus_if.write_data;
+  }
+
+  always_comb {
+    bus_if.ready      = avalon_if.readdatavalid || avalon_if.writeresponsevalid;
+    bus_if.status     = avalon_if.response as rggen_status;
+    bus_if.read_data  = avalon_if.readdata;
+  }
+
+  always_ff {
+    if_reset {
+      request_done  = '0;
+    } else if bus_if.ack() {
+      request_done  = '0;
+    } else if avalon_if.read || avalon_if.write {
+      request_done  = !avalon_if.waitrequest;
+    }
+  }
+}

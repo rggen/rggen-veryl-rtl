@@ -1,0 +1,54 @@
+pub interface rggen_avalon_if #(
+  param ADDRESS_WIDTH:  u32 = 16,
+  param BUS_WIDTH:      u32 = 32
+) {
+  var read:               logic;
+  var write:              logic;
+  var address:            logic<ADDRESS_WIDTH>;
+  var byteenable:         logic<BUS_WIDTH/8>;
+  var writedata:          logic<BUS_WIDTH>;
+  var waitrequest:        logic;
+  var readdatavalid:      logic;
+  var writeresponsevalid: logic;
+  var response:           logic<2>;
+  var readdata:           logic<BUS_WIDTH>;
+
+  modport host {
+    read:               output,
+    write:              output,
+    address:            output,
+    byteenable:         output,
+    writedata:          output,
+    waitrequest:        input,
+    readdatavalid:      input,
+    writeresponsevalid: input,
+    response:           input,
+    readdata:           input
+  }
+
+  modport agent {
+    read:               input,
+    write:              input,
+    address:            input,
+    byteenable:         input,
+    writedata:          input,
+    waitrequest:        output,
+    readdatavalid:      output,
+    writeresponsevalid: output,
+    response:           output,
+    readdata:           output
+  }
+
+  modport monitor {
+    read:               input,
+    write:              input,
+    address:            input,
+    byteenable:         input,
+    writedata:          input,
+    waitrequest:        input,
+    readdatavalid:      input,
+    writeresponsevalid: input,
+    response:           input,
+    readdata:           input
+  }
+}

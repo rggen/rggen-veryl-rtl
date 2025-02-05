@@ -82,7 +82,7 @@ pub module rggen_register_common #(
     for i: u32 in 0..WORDS {
       case {frontdoor_read && match[i], frontdoor_write && match[i]} {
         2'b10: {
-          frontdoor_read_mask[i step BUS_WIDTH]   = '1;
+          frontdoor_read_mask[i step BUS_WIDTH]   = register_if.strobe;
           frontdoor_write_mask[i step BUS_WIDTH]  = '0;
         }
         2'b01: {
