@@ -18,17 +18,17 @@ pub module rggen_bit_field #(
   i_clk:              input   clock,
   i_rst:              input   reset,
   bit_field_if:       modport rggen_bit_field_if::bit_field,
-  o_write_trigger:    output  logic,
-  o_read_trigger:     output  logic,
-  i_sw_write_enable:  input   logic,
-  i_hw_write_enable:  input   logic,
-  i_hw_write_data:    input   logic<WIDTH>,
-  i_hw_set:           input   logic<HW_SET_WIDTH>,
-  i_hw_clear:         input   logic<HW_CLEAR_WIDTH>,
-  i_value:            input   logic<WIDTH>,
-  i_mask:             input   logic<WIDTH>,
-  o_value:            output  logic<WIDTH>,
-  o_value_unmasked:   output  logic<WIDTH>
+  o_write_trigger:    output  logic                 = _,
+  o_read_trigger:     output  logic                 = _,
+  i_sw_write_enable:  input   logic                 = '1,
+  i_hw_write_enable:  input   logic                 = '0,
+  i_hw_write_data:    input   logic<WIDTH>          = '0,
+  i_hw_set:           input   logic<HW_SET_WIDTH>   = '0,
+  i_hw_clear:         input   logic<HW_CLEAR_WIDTH> = '0,
+  i_value:            input   logic<WIDTH>          = '0,
+  i_mask:             input   logic<WIDTH>          = '1,
+  o_value:            output  logic<WIDTH>          = _,
+  o_value_unmasked:   output  logic<WIDTH>          = _
 ) {
   const SW_READ_ACTIVE:   bit = SW_READ_ACTION  != rggen_sw_action::READ_NONE;
   const SW_WRITE_ACTIVE:  bit = SW_WRITE_ACTION != rggen_sw_action::WRITE_NONE;

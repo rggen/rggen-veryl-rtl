@@ -7,8 +7,8 @@ pub module rggen_bit_field_w01trg #(
   i_clk:        input   clock,
   i_rst:        input   reset,
   bit_field_if: modport rggen_bit_field_if::bit_field,
-  i_value:      input   logic<WIDTH>,
-  o_trigger:    output  logic<WIDTH>
+  i_value:      input   logic<WIDTH>  = '0,
+  o_trigger:    output  logic<WIDTH>  = _
 ){
   var trigger:  logic<WIDTH>;
 
