@@ -17,78 +17,32 @@ pub module rggen_avalon_adapter #(
   avalon_if:    modport rggen_avalon_if::agent,
   register_if:  modport rggen_register_if::host[REGISTERS]
 ) {
-  inst  bus_if:         rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
-  var   request_valid:  logic<2>;
-  var   read:           logic;
-  var   address:        logic<ADDRESS_WIDTH>;
-  var   byteenable:     logic<BUS_WIDTH/8>;
-  var   writedata:      logic<BUS_WIDTH>;
-  var   response_valid: logic<2>;
-  var   response:       logic<2>;
-  var   readdata:       logic<BUS_WIDTH>;
+  inst  bus_if:       rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   waitrequest:  logic;
+  var   response:     logic<2>;
+  var   readdata:     logic<BUS_WIDTH>;
 
   always_comb {
-    avalon_if.waitrequest         = request_valid[1];
-    avalon_if.readdatavalid       = response_valid[0];
-    avalon_if.writeresponsevalid  = response_valid[1];
-    avalon_if.response            = response;
-    avalon_if.readdata            = readdata;
+    bus_if.valid      = (avalon_if.read || avalon_if.write) && waitrequest;
+    bus_if.access     = if avalon_if.read { rggen_access::READ } else { rggen_access::WRITE };
+    bus_if.address    = avalon_if.address;
+    bus_if.write_data = avalon_if.writedata;
+    bus_if.strobe     = avalon_if.byteenable;
   }
 
   always_comb {
-    bus_if.valid  = request_valid != '0;
-    if request_valid[1] {
-      bus_if.access     = if read { rggen_access::READ } else { rggen_access::WRITE };
-      bus_if.address    = address;
-      bus_if.write_data = writedata;
-      bus_if.strobe     = byteenable;
-    } else {
-      bus_if.access     = if avalon_if.read { rggen_access::READ } else { rggen_access::WRITE };
-      bus_if.address    = avalon_if.address;
-      bus_if.write_data = avalon_if.writedata;
-      bus_if.strobe     = avalon_if.byteenable;
-    }
-  }
-
-  always_comb {
-    request_valid[0]  = avalon_if.read || avalon_if.write;
+    avalon_if.waitrequest = waitrequest;
+    avalon_if.response    = response;
+    avalon_if.readdata    = readdata;
   }
 
   always_ff {
     if_reset {
-      request_valid[1]  = '0;
+      waitrequest = '1;
     } else if bus_if.ack() {
-      request_valid[1]  = '0;
-    } else if request_valid == 2'b01 {
-      request_valid[1]  = '1;
-    }
-  }
-
-  always_ff {
-    if_reset {
-      read        = '0;
-      address     = '0;
-      byteenable  = '0;
-      writedata   = '0;
-    } else if request_valid == 2'b01 {
-      read        = avalon_if.read;
-      address     = avalon_if.address;
-      byteenable  = avalon_if.byteenable;
-      writedata   = avalon_if.writedata;
-    }
-  }
-
-  always_ff {
-    if_reset {
-      response_valid  = 2'b00;
-    } else if bus_if.ack() {
-      if bus_if.access == rggen_access::READ {
-        response_valid  = 2'b01;
-      } else {
-        response_valid  = 2'b10;
-      }
+      waitrequest = '0;
     } else {
-      response_valid  = 2'b00;
+      waitrequest = '1;
     }
   }
 
