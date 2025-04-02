@@ -6,14 +6,14 @@ pub module rggen_bit_field #(
   param PRECEDENCE_ACCESS:        rggen_sw_hw_access  = rggen_sw_hw_access::HW_ACCESS,
   param SW_READ_ACTION:           rggen_sw_action     = rggen_sw_action::READ_DEFAULT,
   param SW_WRITE_ACTION:          rggen_sw_action     = rggen_sw_action::WRITE_DEFAULT,
-  param SW_WRITE_ONCE:            bit                 = '0,
+  param SW_WRITE_ONCE:            bool                = false,
   param SW_WRITE_ENABLE_POLARITY: rggen_polarity      = rggen_polarity::ACTIVE_HIGH,
   param HW_WRITE_ENABLE_POLARITY: rggen_polarity      = rggen_polarity::ACTIVE_HIGH,
   param HW_SET_WIDTH:             u32                 = WIDTH,
   param HW_CLEAR_WIDTH:           u32                 = WIDTH,
-  param STORAGE:                  bit                 = '1,
-  param EXTERNAL_READ_DATA:       bit                 = '0,
-  param TRIGGER:                  bit                 = '0
+  param STORAGE:                  bool                = true,
+  param EXTERNAL_READ_DATA:       bool                = false,
+  param TRIGGER:                  bool                = false
 )(
   i_clk:              input   clock,
   i_rst:              input   reset,
@@ -116,24 +116,22 @@ pub module rggen_bit_field #(
     var value:      logic<WIDTH>;
 
     set_clear[0]  =
-      if HW_SET_WIDTH == WIDTH {
+      if HW_SET_WIDTH == WIDTH ? (
         set as WIDTH
-      } else {
+      ) : (
         {set[0] repeat WIDTH}
-      };
+      );
     set_clear[1]  =
-      if HW_CLEAR_WIDTH == WIDTH {
+      if HW_CLEAR_WIDTH == WIDTH ? (
         clear as WIDTH
-      } else {
+      ) : (
         {clear[0] repeat WIDTH}
-      };
-    value =
-      if write_enable == HW_WRITE_ENABLE_POLARITY {
-        write_data
-      } else {
-        current_value
-      };
-
+      );
+    value = if write_enable == HW_WRITE_ENABLE_POLARITY ? (
+      write_data
+    ) : (
+      current_value
+    );
     return (value & (~set_clear[1])) | set_clear[0];
   }
 
@@ -259,12 +257,12 @@ pub module rggen_bit_field #(
 
   always_comb {
     read_data =
-      if !SW_READ_ACTIVE {
+      if !SW_READ_ACTIVE ? (
         '0
-      } else if EXTERNAL_READ_DATA {
+      ) : if EXTERNAL_READ_DATA ? (
         i_value
-      } else {
+      ) : (
         value
-      };
+      );
   }
 }

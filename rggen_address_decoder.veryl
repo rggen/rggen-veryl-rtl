@@ -1,8 +1,8 @@
 import  rggen_rtl_pkg::*;
 
 pub module rggen_address_decoder #(
-  param READABLE:       bit                 = 1,
-  param WRITABLE:       bit                 = 1,
+  param READABLE:       bool                = true,
+  param WRITABLE:       bool                = true,
   param ADDRESS_WIDTH:  u32                 = 8,
   param BUS_WIDTH:      u32                 = 32,
   param START_ADDRESS:  bit<ADDRESS_WIDTH>  = '0,

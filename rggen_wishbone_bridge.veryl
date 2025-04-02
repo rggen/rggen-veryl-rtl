@@ -1,8 +1,8 @@
 import  rggen_rtl_pkg::*;
 
 pub module rggen_wishbone_bridge #(
-  param ADDRESS_WIDTH:  u32 = 16,
-  param USE_STALL:      bit = 1
+  param ADDRESS_WIDTH:  u32   = 16,
+  param USE_STALL:      bool  = true
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,
@@ -22,7 +22,7 @@ pub module rggen_wishbone_bridge #(
 
   always_comb {
     bus_if.ready      = wishbone_if.ack || wishbone_if.err || wishbone_if.rty;
-    bus_if.status     = if wishbone_if.ack { rggen_status::OKAY } else { rggen_status::SLAVE_ERROR };
+    bus_if.status     = if wishbone_if.ack ? rggen_status::OKAY : rggen_status::SLAVE_ERROR;
     bus_if.read_data  = wishbone_if.dat_r;
   }
 

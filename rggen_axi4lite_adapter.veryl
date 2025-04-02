@@ -6,13 +6,13 @@ pub module rggen_axi4lite_adapter #(
   param LOCAL_ADDRESS_WIDTH:  u32                 = ADDRESS_WIDTH,
   param BUS_WIDTH:            u32                 = 32,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bit                 = 0,
+  param PRE_DECODE:           bool                = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param ERROR_STATUS:         bit                 = 0,
+  param ERROR_STATUS:         bool                = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bit                 = 0,
-  param WRITE_FIRST:          bit                 = 1
+  param INSERT_SLICER:        bool                = false,
+  param WRITE_FIRST:          bool                = true
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,
@@ -61,14 +61,14 @@ pub module rggen_axi4lite_adapter #(
 
   always_comb {
     request_valid[0]  =
-      if request_valid[1] != '0 {
+      if request_valid[1] != '0 ? (
         request_valid[1]
-      } else {
+      ) : (
         get_request_valid(
           buffer_if.awvalid, buffer_if.wvalid,
           buffer_if.arvalid
         )
-      };
+      );
   }
 
   always_ff {

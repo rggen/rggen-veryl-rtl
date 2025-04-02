@@ -22,7 +22,7 @@ pub module rggen_apb_bridge #(
 
   always_comb {
     bus_if.ready      = apb_if.pready && busy;
-    bus_if.status     = if apb_if.pslverr { rggen_status::SLAVE_ERROR } else { rggen_status::OKAY };
+    bus_if.status     = if apb_if.pslverr ? rggen_status::SLAVE_ERROR : rggen_status::OKAY;
     bus_if.read_data  = apb_if.prdata;
   }
 

@@ -17,8 +17,8 @@ pub module rggen_external_register #(
   var address_match:  logic;
 
   inst u_address_decoder: rggen_address_decoder #(
-    READABLE:       1'b1,
-    WRITABLE:       1'b1,
+    READABLE:       true,
+    WRITABLE:       true,
     ADDRESS_WIDTH:  ADDRESS_WIDTH,
     BUS_WIDTH:      BUS_WIDTH,
     START_ADDRESS:  START_ADDRESS,

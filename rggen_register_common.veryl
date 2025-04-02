@@ -1,8 +1,8 @@
 import  rggen_rtl_pkg::*;
 
 pub module rggen_register_common #(
-  param READABLE:       bit                 = 1,
-  param WRITABLE:       bit                 = 1,
+  param READABLE:       bool                = true,
+  param WRITABLE:       bool                = true,
   param ADDRESS_WIDTH:  u32                 = 8,
   param OFFSET_ADDRESS: bit<ADDRESS_WIDTH>  = '0,
   param BUS_WIDTH:      u32                 = 32,
@@ -96,12 +96,7 @@ pub module rggen_register_common #(
       }
     }
 
-    frontdoor_write_data  =
-      if WRITABLE {
-        {register_if.write_data repeat WORDS}
-      } else {
-        '0
-      };
+    frontdoor_write_data  = if WRITABLE ? {register_if.write_data repeat WORDS} : '0;
   }
 
   //  Response

@@ -29,30 +29,10 @@ pub interface rggen_wishbone_if #(
   }
 
   modport slave {
-    cyc:    input,
-    stb:    input,
-    stall:  output,
-    adr:    input,
-    we:     input,
-    sel:    input,
-    dat_w:  input,
-    ack:    output,
-    err:    output,
-    rty:    output,
-    dat_r:  output
+    ..converse(master)
   }
 
   modport monitor {
-    cyc:    input,
-    stb:    input,
-    stall:  input,
-    adr:    input,
-    we:     input,
-    sel:    input,
-    dat_w:  input,
-    ack:    input,
-    err:    input,
-    rty:    input,
-    dat_r:  input
+    ..input
   }
 }

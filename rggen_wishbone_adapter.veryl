@@ -5,13 +5,13 @@ pub module rggen_wishbone_adapter #(
   param LOCAL_ADDRESS_WIDTH:  u32                 = ADDRESS_WIDTH,
   param BUS_WIDTH:            u32                 = 32,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bit                 = 0,
+  param PRE_DECODE:           bool                = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param ERROR_STATUS:         bit                 = 0,
+  param ERROR_STATUS:         bool                = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bit                 = 0,
-  param USE_STALL:            bit                 = 1
+  param INSERT_SLICER:        bool                = false,
+  param USE_STALL:            bool                = true
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,
@@ -35,12 +35,12 @@ pub module rggen_wishbone_adapter #(
   always_comb {
     bus_if.valid  = (request_valid != '0) && (response_valid == '0);
     if request_valid[1] {
-      bus_if.access     = if wb_we { rggen_access::WRITE } else { rggen_access::READ };
+      bus_if.access     = if wb_we ? rggen_access::WRITE : rggen_access::READ;
       bus_if.address    = wb_adr;
       bus_if.write_data = wb_dat;
       bus_if.strobe     = wb_sel;
     } else {
-      bus_if.access     = if wishbone_if.we { rggen_access::WRITE } else { rggen_access::READ };
+      bus_if.access     = if wishbone_if.we ? rggen_access::WRITE : rggen_access::READ;
       bus_if.address    = wishbone_if.adr;
       bus_if.write_data = wishbone_if.dat_w;
       bus_if.strobe     = wishbone_if.sel;

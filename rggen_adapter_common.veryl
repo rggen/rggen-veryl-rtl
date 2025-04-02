@@ -6,13 +6,13 @@ pub module rggen_adapter_common #(
   param BUS_WIDTH:            u32                 = 32,
   param STROBE_WIDTH:         u32                 = BUS_WIDTH / 8,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bit                 = 0,
+  param PRE_DECODE:           bool                = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param USE_READ_STROBE:      bit                 = 0,
-  param ERROR_STATUS:         bit                 = 0,
+  param USE_READ_STROBE:      bool                = false,
+  param ERROR_STATUS:         bool                = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bit                 = 0
+  param INSERT_SLICER:        bool                = false
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,
@@ -37,8 +37,8 @@ pub module rggen_adapter_common #(
 
   if PRE_DECODE : g_pre_decode {
     inst u_pre_decoder: rggen_address_decoder #(
-      READABLE:       1,
-      WRITABLE:       1,
+      READABLE:       true,
+      WRITABLE:       true,
       ADDRESS_WIDTH:  ADDRESS_WIDTH,
       BUS_WIDTH:      BUS_WIDTH,
       START_ADDRESS:  BASE_ADDRESS,
@@ -174,14 +174,14 @@ pub module rggen_adapter_common #(
 
   always_comb {
     bus_if.ready  =
-      if INSERT_SLICER {
+      if INSERT_SLICER ? (
         busy && ((register_ready != '0) || bus_inactive)
-      } else {
+      ) : (
         (register_ready != '0) || bus_inactive
-      };
+      );
 
     if bus_inactive {
-      bus_if.status     = if ERROR_STATUS { rggen_status::SLAVE_ERROR } else { rggen_status::OKAY };
+      bus_if.status     = if ERROR_STATUS ? rggen_status::SLAVE_ERROR : rggen_status::OKAY;
       bus_if.read_data  = DEFAULT_READ_DATA;
     } else {
       bus_if.status     = bus_response.status;

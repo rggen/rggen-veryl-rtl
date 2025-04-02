@@ -40,6 +40,6 @@ pub package rggen_rtl_pkg {
   }
 
   function clip_width(width: input u32) -> u32 {
-    return if width >= 1 { width } else { 1 };
+    return if width >= 1 ? width : 1;
   }
 }

@@ -11,9 +11,8 @@ module rggen_avalon_bridge #(
     avalon_if.read        = bus_if.valid && (bus_if.access == rggen_access::READ);
     avalon_if.write       = bus_if.valid && (bus_if.access != rggen_access::READ);
     avalon_if.address     = bus_if.address;
-    avalon_if.byteenable  = if bus_if.access != rggen_access::READ { bus_if.strobe }
-                            else if READ_STROBE                    { bus_if.strobe }
-                            else                                   { '1            };
+    avalon_if.byteenable  = if bus_if.access != rggen_access::READ ? bus_if.strobe
+                          : if READ_STROBE                         ? bus_if.strobe : '1;
     avalon_if.writedata   = bus_if.write_data;
   }
 

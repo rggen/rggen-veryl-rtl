@@ -29,28 +29,11 @@ interface rggen_register_if #(
   }
 
   modport register {
-    valid:      input,
-    access:     input,
-    address:    input,
-    write_data: input,
-    strobe:     input,
-    ready:      output,
-    status:     output,
-    read_data:  output,
-    active:     output,
-    value:      output
+    value: output,
+    ..converse(host)
   }
 
   modport monitor {
-    valid:      input,
-    access:     input,
-    address:    input,
-    write_data: input,
-    strobe:     input,
-    ready:      input,
-    status:     input,
-    read_data:  input,
-    active:     input,
-    value:      input
+    ..input
   }
 }

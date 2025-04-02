@@ -31,26 +31,12 @@ pub interface rggen_bus_if #(
   }
 
   modport slave {
-    valid:      input,
-    access:     input,
-    address:    input,
-    write_data: input,
-    strobe:     input,
-    ready:      output,
-    status:     output,
-    read_data:  output,
-    ack:        import
+    ack:  import,
+    ..converse(master)
   }
 
   modport monitor {
-    valid:      input,
-    access:     input,
-    address:    input,
-    write_data: input,
-    strobe:     input,
-    ready:      input,
-    status:     input,
-    read_data:  input,
-    ack:        import
+    ack:  import,
+    ..input
   }
 }

@@ -5,12 +5,12 @@ pub module rggen_apb_adapter #(
   param LOCAL_ADDRESS_WIDTH:  u32                 = 8,
   param BUS_WIDTH:            u32                 = 32,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bit                 = 0,
+  param PRE_DECODE:           bool                = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param ERROR_STATUS:         bit                 = 0,
+  param ERROR_STATUS:         bool                = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bit                 = 0
+  param INSERT_SLICER:        bool                = false
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,
@@ -24,7 +24,7 @@ pub module rggen_apb_adapter #(
 
   always_comb {
     bus_if.valid      = apb_if.psel && (!pready);
-    bus_if.access     = if apb_if.pwrite { rggen_access::WRITE } else { rggen_access::READ };
+    bus_if.access     = if apb_if.pwrite ? rggen_access::WRITE : rggen_access::READ;
     bus_if.address    = apb_if.paddr as ADDRESS_WIDTH;
     bus_if.write_data = apb_if.pwdata;
     bus_if.strobe     = apb_if.pstrb;

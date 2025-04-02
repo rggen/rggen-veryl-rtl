@@ -3,3 +3,4 @@
 *.f
 *.lock
 /dependencies
+/.build

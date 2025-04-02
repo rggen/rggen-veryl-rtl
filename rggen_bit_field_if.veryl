@@ -28,22 +28,12 @@ interface rggen_bit_field_if #(
   }
 
   modport bit_field {
-    valid:            input,
-    read_mask:        input,
-    write_mask:       input,
-    write_data:       input,
-    read_data:        output,
-    value:            output,
     is_read_access:   import,
-    is_write_access:  import
+    is_write_access:  import,
+    ..converse(register)
   }
 
   modport monitor {
-    valid:      input,
-    read_mask:  input,
-    write_mask: input,
-    write_data: input,
-    read_data:  input,
-    value:      input
+    ..input
   }
 }

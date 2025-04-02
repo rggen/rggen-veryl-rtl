@@ -27,28 +27,10 @@ pub interface rggen_apb_if #(
   }
 
   modport slave {
-    psel:     input,
-    penable:  input,
-    paddr:    input,
-    pprot:    input,
-    pwrite:   input,
-    pstrb:    input,
-    pwdata:   input,
-    pready:   output,
-    prdata:   output,
-    pslverr:  output
+    ..converse(master)
   }
 
   modport monitor {
-    psel:     input,
-    penable:  input,
-    paddr:    input,
-    pprot:    input,
-    pwrite:   input,
-    pstrb:    input,
-    pwdata:   input,
-    pready:   input,
-    prdata:   input,
-    pslverr:  input
+    ..input
   }
 }

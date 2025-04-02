@@ -83,64 +83,20 @@ pub interface rggen_axi4lite_if #(
   }
 
   modport slave {
-    awready:    output,
-    awvalid:    input,
-    awid:       input,
-    awaddr:     input,
-    awprot:     input,
-    wready:     output,
-    wvalid:     input,
-    wdata:      input,
-    wstrb:      input,
-    bready:     input,
-    bvalid:     output,
-    bid:        output,
-    bresp:      output,
-    arready:    output,
-    arvalid:    input,
-    arid:       input,
-    araddr:     input,
-    arprot:     input,
-    rready:     input,
-    rvalid:     output,
-    rid:        output,
-    rresp:      output,
-    rdata:      output,
     awaddr_ack: import,
     wdata_ack:  import,
     bresp_ack:  import,
     araddr_ack: import,
-    rresp_ack:  import
+    rresp_ack:  import,
+    ..converse(master)
   }
 
   modport monitor {
-    awready:    input,
-    awvalid:    input,
-    awid:       input,
-    awaddr:     input,
-    awprot:     input,
-    wready:     input,
-    wvalid:     input,
-    wdata:      input,
-    wstrb:      input,
-    bready:     input,
-    bvalid:     input,
-    bid:        input,
-    bresp:      input,
-    arready:    input,
-    arvalid:    input,
-    arid:       input,
-    araddr:     input,
-    arprot:     input,
-    rready:     input,
-    rvalid:     input,
-    rid:        input,
-    rresp:      input,
-    rdata:      input,
     awaddr_ack: import,
     wdata_ack:  import,
     bresp_ack:  import,
     araddr_ack: import,
-    rresp_ack:  import
+    rresp_ack:  import,
+    ..input
   }
 }

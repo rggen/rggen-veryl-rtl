@@ -23,24 +23,10 @@ pub interface rggen_avalon_if #(
   }
 
   modport agent {
-    read:         input,
-    write:        input,
-    address:      input,
-    byteenable:   input,
-    writedata:    input,
-    waitrequest:  output,
-    response:     output,
-    readdata:     output
+    ..converse(host)
   }
 
   modport monitor {
-    read:         input,
-    write:        input,
-    address:      input,
-    byteenable:   input,
-    writedata:    input,
-    waitrequest:  input,
-    response:     input,
-    readdata:     input
+    ..input
   }
 }
