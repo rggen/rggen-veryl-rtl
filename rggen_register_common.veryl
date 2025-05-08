@@ -10,11 +10,11 @@ pub module rggen_register_common #(
   param VALUE_WIDTH:    u32                 = BUS_WIDTH,
   param VALID_BITS:     bit<DATA_WIDTH>     = '1
 )(
-  i_clk:              input   `_ clock,
-  i_rst:              input   `_ reset,
-  register_if:        modport `_ rggen_register_if::register,
-  i_additional_match: input   `_ logic,
-  bit_field_if:       modport `_ rggen_bit_field_if::register
+  i_clk:              input   '_ clock,
+  i_rst:              input   '_ reset,
+  register_if:        modport '_ rggen_register_if::register,
+  i_additional_match: input   '_ logic,
+  bit_field_if:       modport '_ rggen_bit_field_if::register
 ) {
   const WORDS:          u32 = DATA_WIDTH / BUS_WIDTH;
   const BUS_BYTE_WIDTH: u32 = BUS_WIDTH / 8;
@@ -129,8 +129,8 @@ pub module rggen_register_common #(
 
   //  Backdoor
   #[ifdef(RGGEN_ENABLE_BACKDOOR)] {
-    var clk:    `_ clock_posedge;
-    var rst_n:  `_ reset_async_low;
+    var clk:    '_ clock_posedge;
+    var rst_n:  '_ reset_async_low;
 
     always_comb {
       clk   = i_clk as clock_posedge;
