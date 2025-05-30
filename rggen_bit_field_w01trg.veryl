@@ -10,7 +10,8 @@ pub module rggen_bit_field_w01trg #(
   i_value:      input   logic<WIDTH>  = '0,
   o_trigger:    output  logic<WIDTH>  = _
 ){
-  var trigger:  logic<WIDTH>;
+  var trigger       : logic<WIDTH>;
+  var assert_trigger: logic<WIDTH>;
 
   always_comb {
     bit_field_if.read_data  = i_value;
@@ -21,18 +22,25 @@ pub module rggen_bit_field_w01trg #(
     o_trigger = trigger;
   }
 
+  always_comb {
+    for i: u32 in 0..WIDTH {
+      assert_trigger[i] =
+        bit_field_if.write_valid && bit_field_if.mask[i] &&
+          bit_field_if.write_data[i] == TRIGGER_VALUE;
+    }
+  }
+
   always_ff {
     if_reset {
       trigger = '0;
-    } else if bit_field_if.valid {
-      trigger =
-        if TRIGGER_VALUE ? (
-          bit_field_if.write_mask & bit_field_if.write_data
-        ) : (
-          bit_field_if.write_mask & (~bit_field_if.write_data)
-        );
-    } else if trigger != '0 {
-      trigger = '0;
+    } else {
+      for i: u32 in 0..WIDTH {
+        if assert_trigger[i] {
+          trigger[i] = '1;
+        } else if trigger[i] {
+          trigger[i] = '0;
+        }
+      }
     }
   }
 }

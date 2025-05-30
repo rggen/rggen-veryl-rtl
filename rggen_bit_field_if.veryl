@@ -3,33 +3,23 @@ import rggen_rtl_pkg::*;
 interface rggen_bit_field_if #(
   param WIDTH:  u32 = 32
 ) {
-  var valid:      logic;
-  var read_mask:  logic<WIDTH>;
-  var write_mask: logic<WIDTH>;
-  var write_data: logic<WIDTH>;
-  var read_data:  logic<WIDTH>;
-  var value:      logic<WIDTH>;
-
-  function is_read_access() -> logic {
-    return valid && read_mask != '0;
-  }
-
-  function is_write_access() -> logic {
-    return valid && write_mask != '0;
-  }
+  var read_valid : logic;
+  var write_valid: logic;
+  var mask       : logic<WIDTH>;
+  var write_data : logic<WIDTH>;
+  var read_data  : logic<WIDTH>;
+  var value      : logic<WIDTH>;
 
   modport register {
-    valid:      output,
-    read_mask:  output,
-    write_mask: output,
-    write_data: output,
-    read_data:  input,
-    value:      input
+    read_valid : output,
+    write_valid: output,
+    mask       : output,
+    write_data : output,
+    read_data  : input ,
+    value      : input ,
   }
 
   modport bit_field {
-    is_read_access:   import,
-    is_write_access:  import,
     ..converse(register)
   }
 
