@@ -1,25 +1,27 @@
 import  rggen_rtl_pkg::*;
 
 pub module rggen_address_decoder #(
-  param READABLE:       bool                = true,
-  param WRITABLE:       bool                = true,
-  param ADDRESS_WIDTH:  u32                 = 8,
-  param BUS_WIDTH:      u32                 = 32,
-  param START_ADDRESS:  bit<ADDRESS_WIDTH>  = '0,
-  param BYTE_SIZE:      u32                 = BUS_WIDTH / 8
+  param READABLE            : bool               = true         ,
+  param WRITABLE            : bool               = true         ,
+  param ADDRESS_WIDTH       : u32                = 8            ,
+  param BUS_WIDTH           : u32                = 32           ,
+  param START_ADDRESS       : bit<ADDRESS_WIDTH> = '0           ,
+  param BYTE_SIZE           : u32                = BUS_WIDTH / 8,
+  param USE_ADDITIONAL_MATCH: bool               = false        ,
 )(
-  i_address:          input   logic<ADDRESS_WIDTH>,
-  i_access:           input   rggen_access,
-  i_additional_match: input   logic,
-  o_match:            output  logic
+  i_address         : input  logic<ADDRESS_WIDTH>,
+  i_access          : input  rggen_access        ,
+  i_additional_match: input  logic               ,
+  o_match           : output logic               ,
 ) {
   const LSB:          u32                 = $clog2(BUS_WIDTH / 8);
   const MSB:          u32                 = ADDRESS_WIDTH - 1;
   const END_ADDRESS:  bit<ADDRESS_WIDTH>  = START_ADDRESS
                                           + (BYTE_SIZE - 1) as ADDRESS_WIDTH;
 
-  var address_match:  logic;
-  var access_match:   logic;
+  var address_match   : logic;
+  var access_match    : logic;
+  var additional_match: logic;
 
   /* verilator lint_off CMPCONST */
   always_comb {
@@ -35,7 +37,13 @@ pub module rggen_address_decoder #(
       default:                    access_match  = '0;
     }
 
-    o_match = address_match && access_match && i_additional_match;
+    if USE_ADDITIONAL_MATCH {
+      additional_match = i_additional_match;
+    } else {
+      additional_match = 1'b1;
+    }
+
+    o_match = address_match && access_match && additional_match;
   }
   /* verilator lint_on CMPCONST */
 }

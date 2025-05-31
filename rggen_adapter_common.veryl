@@ -137,55 +137,71 @@ pub module rggen_adapter_common #(
     return register_strobe;
   }
 
+  const STATUS_WIDTH  : u32 = $bits(rggen_status);
+  const RESPONSE_WIDTH: u32 = 2 + BUS_WIDTH + (if ERROR_STATUS ? STATUS_WIDTH : 0);
+
   //  Response
-  struct rggen_response {
-    status:     rggen_status,
-    read_data:  logic<BUS_WIDTH>
-  }
+  var active            : logic<REGISTERS>;
+  var response          : logic<REGISTERS, RESPONSE_WIDTH>;
+  var register_response : logic<RESPONSE_WIDTH>;
+  var register_active   : logic;
+  var register_ready    : logic;
+  var register_read_data: logic<BUS_WIDTH>;
+  var register_status   : rggen_status;
+  var register_inactive : logic;
 
-  var register_active:    logic<REGISTERS>;
-  var register_ready:     logic<REGISTERS>;
-  var register_response:  rggen_response<REGISTERS>;
-  var bus_inactive:       logic;
-  var bus_response:       rggen_response;
+  if ERROR_STATUS: g_response {
+    for i in 0..REGISTERS: g {
+      always_comb {
+        active[i]   = register_if[i].active;
+        response[i] = {register_if[i].status, register_if[i].read_data, register_if[i].ready, 1'b1};
+      }
+    }
 
-  for i in 0..REGISTERS: g_response {
     always_comb {
-      register_active[i]              = register_if[i].active;
-      register_ready[i]               = register_if[i].ready;
-      register_response[i].status     = register_if[i].status;
-      register_response[i].read_data  = register_if[i].read_data;
+      register_active    = register_response[0];
+      register_ready     = register_response[1];
+      register_read_data = register_response[2+:BUS_WIDTH];
+      register_status    = register_response[2+BUS_WIDTH+:STATUS_WIDTH] as rggen_status;
+    }
+  } else {
+    for i in 0..REGISTERS: g {
+      always_comb {
+        active[i]   = register_if[i].active;
+        response[i] = {register_if[i].read_data, register_if[i].ready, 1'b1};
+      }
+    }
+
+    always_comb {
+      register_active    = register_response[0];
+      register_ready     = register_response[1];
+      register_read_data = register_response[2+:BUS_WIDTH];
+      register_status    = rggen_status::OKAY;
     }
   }
 
-  always_comb {
-    bus_inactive  = (!inside_range) || (register_active == '0);
-  }
-
   inst u_response_mux: $std::mux #(
-    DATA_TYPE:  rggen_response,
-    ENTRIES:    REGISTERS,
-    KIND:       $std::selector_pkg::selector_kind::ONEHOT
+    WIDTH    : RESPONSE_WIDTH,
+    ENTRIES  : REGISTERS,
+    KIND     : $std::selector_pkg::selector_kind::ONEHOT
   )(
-    i_select: register_active,
-    i_data:   register_response,
-    o_data:   bus_response
+    i_select: active,
+    i_data  : response,
+    o_data  : register_response
   );
 
   always_comb {
-    bus_if.ready  =
-      if INSERT_SLICER ? (
-        busy && ((register_ready != '0) || bus_inactive)
-      ) : (
-        (register_ready != '0) || bus_inactive
-      );
+    register_inactive = (!inside_range) || (!register_active);
+  }
 
-    if bus_inactive {
-      bus_if.status     = if ERROR_STATUS ? rggen_status::SLAVE_ERROR : rggen_status::OKAY;
-      bus_if.read_data  = DEFAULT_READ_DATA;
+  always_comb {
+    bus_if.ready = ((!INSERT_SLICER) || busy) && (register_ready || register_inactive);
+    if ERROR_STATUS && register_inactive {
+      bus_if.read_data = DEFAULT_READ_DATA;
+      bus_if.status    = rggen_status::SLAVE_ERROR;
     } else {
-      bus_if.status     = bus_response.status;
-      bus_if.read_data  = bus_response.read_data;
+      bus_if.read_data = register_read_data;
+      bus_if.status    = register_status;
     }
   }
 }
