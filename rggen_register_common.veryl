@@ -10,11 +10,13 @@ pub module rggen_register_common #(
   param VALUE_WIDTH         : u32                 = BUS_WIDTH,
   param VALID_BITS          : bit<DATA_WIDTH>     = '1       ,
   param USE_ADDITIONAL_MATCH: bool                = false    ,
+  param USE_ADDITIONAL_MASK : bool                = false    ,
 )(
   i_clk             : input   '_ clock                       ,
   i_rst             : input   '_ reset                       ,
   register_if       : modport '_ rggen_register_if::register ,
   i_additional_match: input   '_ logic                       ,
+  i_additional_mask : input   '_ logic<BUS_WIDTH>            ,
   bit_field_if      : modport '_ rggen_bit_field_if::register,
 ) {
   const WORDS:          u32 = DATA_WIDTH / BUS_WIDTH;
@@ -90,21 +92,29 @@ pub module rggen_register_common #(
   always_comb {
     frontdoor_valid      = active && register_if.valid;
     frontdoor_write      = register_if.access[0];
-    frontdoor_mask       = get_mask(match, register_if.strobe);
+    frontdoor_mask       = get_mask(match, register_if.strobe, i_additional_mask);
     frontdoor_write_data = {register_if.write_data repeat WORDS};
   }
 
   function get_mask(
-    match : input logic<WORDS>    ,
-    strobe: input logic<BUS_WIDTH>,
+    match          : input logic<WORDS>    ,
+    strobe         : input logic<BUS_WIDTH>,
+    additional_mask: input logic<BUS_WIDTH>,
   ) -> logic<DATA_WIDTH> {
+    var word_mask: logic<BUS_WIDTH>;
+
+    word_mask = strobe;
+    if USE_ADDITIONAL_MASK {
+      word_mask &= additional_mask;
+    }
+
     if WORDS == 1 {
-      return strobe;
+      return word_mask;
     } else {
       var mask: logic<DATA_WIDTH>;
       for i: u32 in 0..WORDS {
         if match[i] {
-          mask[BUS_WIDTH*i+:BUS_WIDTH] = strobe;
+          mask[BUS_WIDTH*i+:BUS_WIDTH] = word_mask;
         } else {
           mask[BUS_WIDTH*i+:BUS_WIDTH] = '0;
         }
