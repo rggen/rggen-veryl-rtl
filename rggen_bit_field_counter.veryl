@@ -1,0 +1,122 @@
+import rggen_rtl_pkg::*;
+
+pub module rggen_bit_field_counter #(
+  param WIDTH          : u32        = 0                     ,
+  param INITIAL_VALUE  : bit<WIDTH> = '0                    ,
+  param UP_WIDTH       : u32        = 1                     ,
+  param DOWN_WIDTH     : u32        = 1                     ,
+  param WRAP_AROUND    : bool       = false                 ,
+  param USE_CLEAR      : bool       = true                  ,
+  const UP_PORT_WIDTH  : u32        = clip_width(UP_WIDTH)  ,
+  const DOWN_PORT_WIDTH: u32        = clip_width(DOWN_WIDTH),
+)(
+  i_clk       : input   clock                        ,
+  i_rst       : input   reset                        ,
+  bit_field_if: modport rggen_bit_field_if::bit_field,
+  i_clear     : input   logic                        ,
+  i_up        : input   logic<UP_PORT_WIDTH>         ,
+  i_down      : input   logic<DOWN_PORT_WIDTH>       ,
+  o_count     : output  logic<WIDTH>                 ,
+) {
+  var up   : logic<UP_PORT_WIDTH>  ;
+  var down : logic<DOWN_PORT_WIDTH>;
+  var count: logic<WIDTH>          ;
+
+  always_comb {
+    bit_field_if.read_data = count;
+    bit_field_if.value     = count;
+    o_count                = count;
+  }
+
+  always_comb {
+    up   = if UP_WIDTH   >: 0 ? i_up   : '0;
+    down = if DOWN_WIDTH >: 0 ? i_down : '0;
+  }
+
+  always_ff {
+    if_reset {
+      count = INITIAL_VALUE;
+    } else if i_clear {
+      count = INITIAL_VALUE;
+    } else if bit_field_if.write_valid {
+      for i: u32 in 0..WIDTH {
+        if bit_field_if.mask[i] {
+          count[i] = bit_field_if.write_data[i];
+        }
+      }
+    } else if (up != '0) || (down != '0) {
+      if WRAP_AROUND {
+        count = calc_count_next_simple(count, up, down);
+      } else {
+        count = calc_count_next(count, up, down);
+      }
+    }
+  }
+
+  function calc_count_next_simple(
+    count: input logic<WIDTH>          ,
+    up   : input logic<UP_PORT_WIDTH>  ,
+    down : input logic<DOWN_PORT_WIDTH>,
+  ) -> logic<WIDTH> {
+    const UP_VALUE_WIDTH  : u32 = clip_width($clog2(UP_WIDTH + 1));
+    const DOWN_VALUE_WIDTH: u32 = clip_width($clog2(DOWN_WIDTH + 1));
+
+    var up_value  : logic<UP_VALUE_WIDTH>;
+    var down_value: logic<DOWN_VALUE_WIDTH>;
+
+    up_value = 0 as UP_VALUE_WIDTH;
+    for i: u32 in 0..UP_WIDTH {
+      if up[i] {
+        up_value += (1 as UP_VALUE_WIDTH);
+      }
+    }
+
+    down_value = 0 as DOWN_VALUE_WIDTH;
+    for i: u32 in 0..DOWN_WIDTH {
+      if down[i] {
+        down_value += (1 as DOWN_VALUE_WIDTH);
+      }
+    }
+
+    return count + (up_value as WIDTH) - (down_value as WIDTH);
+  }
+
+  function calc_count_next(
+    count: input logic<WIDTH>          ,
+    up   : input logic<UP_PORT_WIDTH>  ,
+    down : input logic<DOWN_PORT_WIDTH>,
+  ) -> logic<WIDTH> {
+    const UP_DOWN_WIDTH      : u32 = if UP_WIDTH >: DOWN_WIDTH ? UP_WIDTH : DOWN_WIDTH;
+    const UP_DOWN_VALUE_WIDTH: u32 = clip_width($clog2(UP_DOWN_WIDTH + 1)) + 1;
+    const COUNT_NEXT_WIDTH   : u32 = WIDTH + 1;
+
+    var up_down_value: logic<UP_DOWN_VALUE_WIDTH>;
+    var count_next   : logic<COUNT_NEXT_WIDTH>;
+
+    up_down_value = 0 as UP_DOWN_VALUE_WIDTH;
+    for i: u32 in 0..UP_DOWN_WIDTH {
+      var up_down: logic<2>;
+
+      up_down[1] = (i <: UP_WIDTH  ) && up[i];
+      up_down[0] = (i <: DOWN_WIDTH) && down[i];
+      case up_down {
+        2'b10  : up_down_value = up_down_value + (1 as UP_DOWN_VALUE_WIDTH);
+        2'b01  : up_down_value = up_down_value - (1 as UP_DOWN_VALUE_WIDTH);
+        default: up_down_value = up_down_value;
+      }
+    }
+
+    count_next =
+      (count as COUNT_NEXT_WIDTH) +
+      {up_down_value[msb] repeat (COUNT_NEXT_WIDTH - UP_DOWN_VALUE_WIDTH), up_down_value};
+    if !count_next[msb] {
+      return count_next[0+:WIDTH];
+    } else if up_down_value[msb] {
+      //  underflow
+      return '0;
+    } else {
+      //  overflow
+      return '1;
+    }
+  }
+}
