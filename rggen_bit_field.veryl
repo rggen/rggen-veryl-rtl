@@ -38,7 +38,7 @@ pub module rggen_bit_field #(
   const SW_WRITABLE   : bool = SW_WRITE_ACTION != rggen_sw_action::WRITE_NONE;
   const SW_READABLE   : bool = SW_READ_ACTION  != rggen_sw_action::READ_NONE;
   const SW_READ_UPDATE: bool = SW_READABLE && SW_READ_ACTION != rggen_sw_action::READ_DEFAULT;
-  const HW_UPDATE     : bool = HW_WRITE || HW_SET || HW_SET;
+  const HW_UPDATE     : bool = HW_WRITE || HW_SET || HW_CLEAR;
 
 //--------------------------------------------------------------
 //  Utility functions
