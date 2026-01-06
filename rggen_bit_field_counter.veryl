@@ -1,7 +1,7 @@
 import rggen_rtl_pkg::*;
 
 pub module rggen_bit_field_counter #(
-  param WIDTH          : u32        = 0                     ,
+  param WIDTH          : u32        = 8                     ,
   param INITIAL_VALUE  : bit<WIDTH> = '0                    ,
   param UP_WIDTH       : u32        = 1                     ,
   param DOWN_WIDTH     : u32        = 1                     ,
