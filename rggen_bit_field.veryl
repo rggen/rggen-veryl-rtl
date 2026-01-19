@@ -268,11 +268,17 @@ pub module rggen_bit_field #(
   }
 
   if TRIGGER && SW_WRITABLE : g_wr_trigger {
+    var wr_access: logic;
+
+    always_comb {
+      wr_access = sw_update[1] && (bit_field_if.mask != '0);
+    }
+
     always_ff {
       if_reset {
         wr_trigger  = '0;
       } else {
-        wr_trigger  = sw_update[1] && (bit_field_if.mask != '0);
+        wr_trigger  = wr_access;
       }
     }
   } else {
@@ -280,11 +286,17 @@ pub module rggen_bit_field #(
   }
 
   if TRIGGER && SW_READABLE : g_rd_trigger {
+    var rd_access: logic;
+
+    always_comb {
+      rd_access = bit_field_if.read_valid && (bit_field_if.mask != '0);
+    }
+
     always_ff {
       if_reset {
         rd_trigger  = '0;
       } else {
-        rd_trigger  = sw_update[0] && (bit_field_if.mask != '0);
+        rd_trigger  = rd_access;
       }
     }
   } else {
