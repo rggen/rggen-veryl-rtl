@@ -6,13 +6,13 @@ pub module rggen_axi4lite_adapter #(
   param LOCAL_ADDRESS_WIDTH:  u32                 = ADDRESS_WIDTH,
   param BUS_WIDTH:            u32                 = 32,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bool                = false,
+  param PRE_DECODE:           bbool               = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param ERROR_STATUS:         bool                = false,
+  param ERROR_STATUS:         bbool               = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bool                = false,
-  param WRITE_FIRST:          bool                = true
+  param INSERT_SLICER:        bbool               = false,
+  param WRITE_FIRST:          bbool               = true
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,

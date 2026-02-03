@@ -2,7 +2,7 @@ import  rggen_rtl_pkg::*;
 
 pub module rggen_wishbone_bridge #(
   param ADDRESS_WIDTH:  u32   = 16,
-  param USE_STALL:      bool  = true
+  param USE_STALL:      bbool = true
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,

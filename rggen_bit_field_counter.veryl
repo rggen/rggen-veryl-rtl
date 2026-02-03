@@ -5,8 +5,8 @@ pub module rggen_bit_field_counter #(
   param INITIAL_VALUE  : bit<WIDTH> = '0                    ,
   param UP_WIDTH       : u32        = 1                     ,
   param DOWN_WIDTH     : u32        = 1                     ,
-  param WRAP_AROUND    : bool       = false                 ,
-  param USE_CLEAR      : bool       = true                  ,
+  param WRAP_AROUND    : bbool      = false                 ,
+  param USE_CLEAR      : bbool      = true                  ,
   const UP_PORT_WIDTH  : u32        = clip_width(UP_WIDTH)  ,
   const DOWN_PORT_WIDTH: u32        = clip_width(DOWN_WIDTH),
 )(

@@ -1,6 +1,6 @@
 pub module rggen_indirect_register #(
-  param READABLE            : bool               = true      ,
-  param WRITABLE            : bool               = true      ,
+  param READABLE            : bbool              = true      ,
+  param WRITABLE            : bbool              = true      ,
   param ADDRESS_WIDTH       : u32                = 8         ,
   param OFFSET_ADDRESS      : bit<ADDRESS_WIDTH> = '0        ,
   param BUS_WIDTH           : u32                = 32        ,
