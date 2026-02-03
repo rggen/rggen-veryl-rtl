@@ -5,12 +5,12 @@ pub module rggen_apb_adapter #(
   param LOCAL_ADDRESS_WIDTH:  u32                 = 8,
   param BUS_WIDTH:            u32                 = 32,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bool                = false,
+  param PRE_DECODE:           bbool               = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param ERROR_STATUS:         bool                = false,
+  param ERROR_STATUS:         bbool               = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bool                = false
+  param INSERT_SLICER:        bbool               = false
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,

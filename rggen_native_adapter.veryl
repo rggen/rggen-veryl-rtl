@@ -6,13 +6,13 @@ pub module rggen_native_adapter #(
   param BUS_WIDTH:            u32                 = 32,
   param STROBE_WIDTH:         u32                 = BUS_WIDTH / 8,
   param REGISTERS:            u32                 = 1,
-  param PRE_DECODE:           bool                = false,
+  param PRE_DECODE:           bbool               = false,
   param BASE_ADDRESS:         bit<ADDRESS_WIDTH>  = '0,
   param BYTE_SIZE:            u32                 = 256,
-  param USE_READ_STROBE:      bool                = false,
-  param ERROR_STATUS:         bool                = false,
+  param USE_READ_STROBE:      bbool               = false,
+  param ERROR_STATUS:         bbool               = false,
   param DEFAULT_READ_DATA:    bit<BUS_WIDTH>      = '0,
-  param INSERT_SLICER:        bool                = false
+  param INSERT_SLICER:        bbool               = false
 )(
   i_clk:        input   clock,
   i_rst:        input   reset,

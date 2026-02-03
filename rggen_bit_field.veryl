@@ -6,19 +6,19 @@ pub module rggen_bit_field #(
   param PRECEDENCE_ACCESS       : rggen_sw_hw_access  = rggen_sw_hw_access::HW_ACCESS ,
   param SW_READ_ACTION          : rggen_sw_action     = rggen_sw_action::READ_DEFAULT ,
   param SW_WRITE_ACTION         : rggen_sw_action     = rggen_sw_action::WRITE_DEFAULT,
-  param SW_WRITE_ONCE           : bool                = false                         ,
-  param SW_WRITE_CONTROL        : bool                = false                         ,
+  param SW_WRITE_ONCE           : bbool               = false                         ,
+  param SW_WRITE_CONTROL        : bbool               = false                         ,
   param SW_WRITE_ENABLE_POLARITY: rggen_polarity      = rggen_polarity::ACTIVE_HIGH   ,
-  param HW_WRITE                : bool                = false                         ,
+  param HW_WRITE                : bbool               = false                         ,
   param HW_WRITE_ENABLE_POLARITY: rggen_polarity      = rggen_polarity::ACTIVE_HIGH   ,
-  param HW_SET                  : bool                = false                         ,
+  param HW_SET                  : bbool               = false                         ,
   param HW_SET_WIDTH            : u32                 = WIDTH                         ,
-  param HW_CLEAR                : bool                = false                         ,
+  param HW_CLEAR                : bbool               = false                         ,
   param HW_CLEAR_WIDTH          : u32                 = WIDTH                         ,
-  param STORAGE                 : bool                = true                          ,
-  param EXTERNAL_READ_DATA      : bool                = false                         ,
-  param EXTERNAL_MASK           : bool                = false                         ,
-  param TRIGGER                 : bool                = false                         ,
+  param STORAGE                 : bbool               = true                          ,
+  param EXTERNAL_READ_DATA      : bbool               = false                         ,
+  param EXTERNAL_MASK           : bbool               = false                         ,
+  param TRIGGER                 : bbool               = false                         ,
 )(
   i_clk            :  input   clock                        ,
   i_rst            :  input   reset                        ,
@@ -35,10 +35,10 @@ pub module rggen_bit_field #(
   o_value          :  output  logic<WIDTH>          = _    ,
   o_value_unmasked:   output  logic<WIDTH>          = _    ,
 ) {
-  const SW_WRITABLE   : bool = SW_WRITE_ACTION != rggen_sw_action::WRITE_NONE;
-  const SW_READABLE   : bool = SW_READ_ACTION  != rggen_sw_action::READ_NONE;
-  const SW_READ_UPDATE: bool = SW_READABLE && SW_READ_ACTION != rggen_sw_action::READ_DEFAULT;
-  const HW_UPDATE     : bool = HW_WRITE || HW_SET || HW_CLEAR;
+  const SW_WRITABLE   : bbool = SW_WRITE_ACTION != rggen_sw_action::WRITE_NONE;
+  const SW_READABLE   : bbool = SW_READ_ACTION  != rggen_sw_action::READ_NONE;
+  const SW_READ_UPDATE: bbool = SW_READABLE && SW_READ_ACTION != rggen_sw_action::READ_DEFAULT;
+  const HW_UPDATE     : bbool = HW_WRITE || HW_SET || HW_CLEAR;
 
 //--------------------------------------------------------------
 //  Utility functions

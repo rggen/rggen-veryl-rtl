@@ -1,13 +1,13 @@
 import  rggen_rtl_pkg::*;
 
 pub module rggen_address_decoder #(
-  param READABLE            : bool               = true         ,
-  param WRITABLE            : bool               = true         ,
+  param READABLE            : bbool              = true         ,
+  param WRITABLE            : bbool              = true         ,
   param ADDRESS_WIDTH       : u32                = 8            ,
   param BUS_WIDTH           : u32                = 32           ,
   param START_ADDRESS       : bit<ADDRESS_WIDTH> = '0           ,
   param BYTE_SIZE           : u32                = BUS_WIDTH / 8,
-  param USE_ADDITIONAL_MATCH: bool               = false        ,
+  param USE_ADDITIONAL_MATCH: bbool              = false        ,
 )(
   i_address         : input  logic<ADDRESS_WIDTH>,
   i_access          : input  rggen_access        ,
