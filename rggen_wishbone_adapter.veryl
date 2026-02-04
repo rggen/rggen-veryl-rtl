@@ -18,14 +18,15 @@ pub module rggen_wishbone_adapter #(
   wishbone_if:  modport rggen_wishbone_if::slave,
   register_if:  modport rggen_register_if::host[REGISTERS]
 ) {
-  inst  bus_if:         rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
-  var   request_valid:  logic<2>;
-  var   wb_adr:         logic<ADDRESS_WIDTH>;
-  var   wb_we:          logic;
-  var   wb_dat:         logic<BUS_WIDTH>;
-  var   wb_sel:         logic<BUS_WIDTH/8>;
+  inst  bus_if        : rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   bus_ack       : logic;
+  var   request_valid : logic<2>;
+  var   wb_adr        : logic<ADDRESS_WIDTH>;
+  var   wb_we         : logic;
+  var   wb_dat        : logic<BUS_WIDTH>;
+  var   wb_sel        : logic<BUS_WIDTH/8>;
   var   response_valid: logic<2>;
-  var   response_data:  logic<BUS_WIDTH>;
+  var   response_data : logic<BUS_WIDTH>;
 
   //  Request
   always_comb {
@@ -93,12 +94,16 @@ pub module rggen_wishbone_adapter #(
     wishbone_if.dat_r = response_data;
   }
 
+  always_comb {
+    bus_ack = bus_if.ack();
+  }
+
   always_ff {
     if_reset {
       response_valid  = '0;
     } else if response_valid != '0 {
       response_valid  = '0;
-    } else if bus_if.ack() {
+    } else if bus_ack {
       case bus_if.status {
         rggen_status::OKAY,
         rggen_status::EXOKAY: response_valid  = 2'b01;
@@ -108,7 +113,7 @@ pub module rggen_wishbone_adapter #(
   }
 
   always_ff {
-    if bus_if.ack() {
+    if bus_ack {
       response_data = bus_if.read_data;
     }
   }
