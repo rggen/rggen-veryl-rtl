@@ -19,9 +19,10 @@ pub module rggen_native_adapter #(
   csrbus_if:    modport rggen_bus_if::slave,
   register_if:  modport rggen_register_if::host[REGISTERS]
 ) {
-  inst  bus_if:           rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH, STROBE_WIDTH);
-  var   csrbus_ready:     logic;
-  var   csrbus_status:    rggen_status;
+  inst  bus_if          : rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH, STROBE_WIDTH);
+  var   bus_ack         : logic;
+  var   csrbus_ready    : logic;
+  var   csrbus_status   : rggen_status;
   var   csrbus_read_data: logic<BUS_WIDTH>;
 
   always_comb {
@@ -46,8 +47,12 @@ pub module rggen_native_adapter #(
     }
   }
 
+  always_comb {
+    bus_ack = bus_if.ack();
+  }
+
   always_ff {
-    if bus_if.ack() {
+    if bus_ack {
       csrbus_status     = bus_if.status;
       csrbus_read_data  = bus_if.read_data;
     }

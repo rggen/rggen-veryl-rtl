@@ -19,13 +19,14 @@ pub module rggen_axi4lite_adapter #(
   axi4lite_if:  modport rggen_axi4lite_if::slave,
   register_if:  modport rggen_register_if::host[REGISTERS]
 ) {
-  inst  buffer_if:      rggen_axi4lite_if #(ID_WIDTH, ADDRESS_WIDTH, BUS_WIDTH);
-  inst  bus_if:         rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
-  var   request_valid:  logic<2, 2>;
+  inst  buffer_if     : rggen_axi4lite_if #(ID_WIDTH, ADDRESS_WIDTH, BUS_WIDTH);
+  inst  bus_if        : rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   bus_ack       : logic;
+  var   request_valid : logic<2, 2>;
   var   response_valid: logic<2>;
-  var   id:             logic<clip_width(ID_WIDTH)>;
-  var   read_data:      logic<BUS_WIDTH>;
-  var   status:         logic<2>;
+  var   id            : logic<clip_width(ID_WIDTH)>;
+  var   read_data     : logic<BUS_WIDTH>;
+  var   status        : logic<2>;
 
   //  Skid buffer
   inst u_buffer: rggen_axi4lite_skid_buffer #(
@@ -137,8 +138,12 @@ pub module rggen_axi4lite_adapter #(
     assign  id  = '0;
   }
 
+  always_comb {
+    bus_ack = bus_if.ack();
+  }
+
   always_ff {
-    if bus_if.ack() {
+    if bus_ack {
       status    = bus_if.status;
       read_data = bus_if.read_data;
     }

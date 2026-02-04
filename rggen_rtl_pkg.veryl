@@ -12,17 +12,17 @@ pub package rggen_rtl_pkg {
     DECODE_ERROR  = 2'b11
   }
 
-  enum rggen_sw_hw_access {
+  enum rggen_sw_hw_access: bit {
     SW_ACCESS,
     HW_ACCESS
   }
 
-  enum rggen_polarity {
+  enum rggen_polarity: bit {
     ACTIVE_LOW,
     ACTIVE_HIGH
   }
 
-  enum rggen_sw_action {
+  enum rggen_sw_action: bit<4> {
     READ_NONE,
     READ_DEFAULT,
     READ_CLEAR,

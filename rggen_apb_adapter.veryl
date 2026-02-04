@@ -17,10 +17,11 @@ pub module rggen_apb_adapter #(
   apb_if:       modport rggen_apb_if::slave,
   register_if:  modport rggen_register_if::host[REGISTERS]
 ) {
-  inst  bus_if:   rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
-  var   pready:   logic;
-  var   prdata:   logic<BUS_WIDTH>;
-  var   pslverr:  logic;
+  inst  bus_if : rggen_bus_if #(ADDRESS_WIDTH, BUS_WIDTH);
+  var   bus_ack: logic;
+  var   pready : logic;
+  var   prdata : logic<BUS_WIDTH>;
+  var   pslverr: logic;
 
   always_comb {
     bus_if.valid      = apb_if.psel && (!pready);
@@ -44,8 +45,12 @@ pub module rggen_apb_adapter #(
     }
   }
 
+  always_comb {
+    bus_ack = bus_if.ack();
+  }
+
   always_ff {
-    if bus_if.ack() {
+    if bus_ack {
       prdata  = bus_if.read_data;
       pslverr = bus_if.status[1];
     }
