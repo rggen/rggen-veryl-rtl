@@ -1,6 +1,6 @@
 [project]
 name        = "rggen"
-version     = "0.6.1"
+version     = "0.7.0"
 authors     = ["Taichi Ishitani <taichi730@gmail.com>"]
 license     = "MIT"
 repository  = "https://github.com/rggen/rggen-veryl-rtl"
