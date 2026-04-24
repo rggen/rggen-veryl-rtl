@@ -112,7 +112,7 @@ pub module rggen_register_common #(
       return word_mask;
     } else {
       var mask: logic<DATA_WIDTH>;
-      for i: u32 in 0..WORDS {
+      for i in 0..WORDS {
         if match[i] {
           mask[BUS_WIDTH*i+:BUS_WIDTH] = word_mask;
         } else {

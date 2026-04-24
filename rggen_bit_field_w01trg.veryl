@@ -23,7 +23,7 @@ pub module rggen_bit_field_w01trg #(
   }
 
   always_comb {
-    for i: u32 in 0..WIDTH {
+    for i in 0..WIDTH {
       assert_trigger[i] =
         bit_field_if.write_valid && bit_field_if.mask[i] &&
           bit_field_if.write_data[i] == TRIGGER_VALUE;
@@ -34,7 +34,7 @@ pub module rggen_bit_field_w01trg #(
     if_reset {
       trigger = '0;
     } else {
-      for i: u32 in 0..WIDTH {
+      for i in 0..WIDTH {
         if assert_trigger[i] {
           trigger[i] = '1;
         } else if trigger[i] {
