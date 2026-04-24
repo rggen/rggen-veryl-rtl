@@ -129,7 +129,7 @@ pub module rggen_adapter_common #(
     } else if STROBE_WIDTH == BUS_WIDTH {
       register_strobe = strobe as BUS_WIDTH;
     } else {
-      for i: u32 in 0..STROBE_WIDTH {
+      for i in 0..STROBE_WIDTH {
         register_strobe[i step 8] = {strobe[i] repeat 8};
       }
     }

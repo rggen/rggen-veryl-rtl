@@ -57,7 +57,7 @@ pub module rggen_external_register #(
       if STROBE_WIDTH == BUS_WIDTH {
         bus_if.strobe = register_if.strobe as STROBE_WIDTH;
       } else {
-        for i: u32 in 0..STROBE_WIDTH {
+        for i in 0..STROBE_WIDTH {
           bus_if.strobe[i]  = register_if.strobe[i step 8] != '0;
         }
       }
