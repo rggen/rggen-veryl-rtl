@@ -18,9 +18,11 @@ pub module rggen_bit_field_counter #(
   i_down      : input   logic<DOWN_PORT_WIDTH>       ,
   o_count     : output  logic<WIDTH>                 ,
 ) {
-  var up   : logic<UP_PORT_WIDTH>  ;
-  var down : logic<DOWN_PORT_WIDTH>;
-  var count: logic<WIDTH>          ;
+  const UP_DOWN_WIDTH: u32 = $std::max::<u32>(UP_PORT_WIDTH, DOWN_PORT_WIDTH);
+
+  var up   : logic<UP_DOWN_WIDTH>;
+  var down : logic<UP_DOWN_WIDTH>;
+  var count: logic<WIDTH>        ;
 
   always_comb {
     bit_field_if.read_data = count;
@@ -29,8 +31,16 @@ pub module rggen_bit_field_counter #(
   }
 
   always_comb {
-    up   = if UP_WIDTH   >: 0 ? i_up   : '0;
-    down = if DOWN_WIDTH >: 0 ? i_down : '0;
+    if UP_WIDTH >: 0 {
+      up = i_up as UP_DOWN_WIDTH;
+    } else {
+      up = '0;
+    }
+    if DOWN_WIDTH >: 0 {
+      down = i_down as UP_DOWN_WIDTH;
+    } else {
+      down = '0;
+    }
   }
 
   always_ff {
@@ -54,9 +64,9 @@ pub module rggen_bit_field_counter #(
   }
 
   function calc_count_next_simple(
-    count: input logic<WIDTH>          ,
-    up   : input logic<UP_PORT_WIDTH>  ,
-    down : input logic<DOWN_PORT_WIDTH>,
+    count: input logic<WIDTH>        ,
+    up   : input logic<UP_DOWN_WIDTH>,
+    down : input logic<UP_DOWN_WIDTH>,
   ) -> logic<WIDTH> {
     const UP_VALUE_WIDTH  : u32 = clip_width($clog2(UP_WIDTH + 1));
     const DOWN_VALUE_WIDTH: u32 = clip_width($clog2(DOWN_WIDTH + 1));
@@ -82,11 +92,10 @@ pub module rggen_bit_field_counter #(
   }
 
   function calc_count_next(
-    count: input logic<WIDTH>          ,
-    up   : input logic<UP_PORT_WIDTH>  ,
-    down : input logic<DOWN_PORT_WIDTH>,
+    count: input logic<WIDTH>        ,
+    up   : input logic<UP_DOWN_WIDTH>,
+    down : input logic<UP_DOWN_WIDTH>,
   ) -> logic<WIDTH> {
-    const UP_DOWN_WIDTH      : u32 = if UP_WIDTH >: DOWN_WIDTH ? UP_WIDTH : DOWN_WIDTH;
     const UP_DOWN_VALUE_WIDTH: u32 = clip_width($clog2(UP_DOWN_WIDTH + 1)) + 1;
     const COUNT_NEXT_WIDTH   : u32 = WIDTH + 1;
 
@@ -96,13 +105,12 @@ pub module rggen_bit_field_counter #(
     up_down_value = 0 as UP_DOWN_VALUE_WIDTH;
     for i in 0..UP_DOWN_WIDTH {
       var up_down: logic<2>;
-
-      up_down[1] = (i <: UP_WIDTH  ) && up[i];
+      up_down[1] = (i <: UP_WIDTH) && up[i];
       up_down[0] = (i <: DOWN_WIDTH) && down[i];
-      case up_down {
-        2'b10  : up_down_value = up_down_value + (1 as UP_DOWN_VALUE_WIDTH);
-        2'b01  : up_down_value = up_down_value - (1 as UP_DOWN_VALUE_WIDTH);
-        default: up_down_value = up_down_value;
+      if up_down == 2'b10 {
+        up_down_value += (1 as UP_DOWN_VALUE_WIDTH);
+      } else if up_down == 2'b01 {
+        up_down_value -= (1 as UP_DOWN_VALUE_WIDTH);
       }
     }
 
